@@ -1,16 +1,16 @@
-# comchat
+# Community App
 
-A new Flutter project.
+This is a Flutter project for a community app.
 
-## Getting Started
+## Changes Made
 
-This project is a starting point for a Flutter application.
+- Added `firebase_core` and `cloud_firestore` to `pubspec.yaml`.
+- Initialized Firebase in `lib/main.dart`.
+- Created a placeholder `lib/firebase_options.dart` file.
+- Created a `lib/FirestoreService.dart` file with a basic Firestore service.
 
-A few resources to get you started if this is your first Flutter project:
+## Next Steps
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1.  **Run `flutter pub get`** to install the new dependencies.
+2.  **Configure Firebase** for your project by following the instructions at [https://firebase.google.com/docs/flutter/setup](https://firebase.google.com/docs/flutter/setup). This will generate a `lib/firebase_options.dart` file with your actual Firebase configuration.
+3.  **Use the `FirestoreService`** to interact with your Firestore database.
