@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "527773746265",
+    "project_id": "comchat-ae2c9",
+    "storage_bucket": "comchat-ae2c9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527773746265:android:427096c81ab244a0689d48",
+        "android_client_info": {
+          "package_name": "com.example.comchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "527773746265-kjq8tmledhdvb5kipn7s57tel0g86ik5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATKTSnGlHB1RZ8pUUtAfG2lb4m6lutvoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "527773746265-kjq8tmledhdvb5kipn7s57tel0g86ik5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
