@@ -292,5 +292,3 @@ class _SpheresPainter extends CustomPainter {
   }
 }
 
-Add a small animation when switching tabs,
-Or convert the BottomNavigation to use a PageView for smooth swipes and animated tab changes?
