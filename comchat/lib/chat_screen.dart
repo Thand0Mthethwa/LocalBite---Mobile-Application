@@ -18,6 +18,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _pressTimer;
   String? _activeMessageId;
+  
 
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
@@ -53,9 +54,43 @@ class _ChatScreenState extends State<ChatScreen> {
       'senderName': senderName,
       'senderPhotoUrl': senderPhoto,
       'senderId': senderId,
+      // mark new messages as unread by default; recipients will see the badge
+      'read': false,
     });
+    // show a quick confirmation to the sender
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Message sent')));
     // Scroll to bottom after sending
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // When opening the chat screen, mark incoming unread messages as read so the badge clears
+    // (WhatsApp-like behaviour: opening the chat clears unread counts).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _markIncomingAsRead();
+    });
+  }
+
+  Future<void> _markIncomingAsRead() async {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('messages')
+          .where('read', isEqualTo: false)
+          .where('senderId', isNotEqualTo: currentUid)
+          .get();
+      if (snap.docs.isEmpty) return;
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in snap.docs) {
+        batch.update(doc.reference, {'read': true});
+      }
+      await batch.commit();
+    } catch (_) {
+      // ignore failures for now — this improves UX but isn't critical
+    }
   }
 
   Future<String?> _askForDisplayName(BuildContext context) async {
@@ -85,6 +120,15 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community Chat'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await _markIncomingAsRead();
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Marked all as read')));
+            },
+            child: const Text('Mark all read', style: TextStyle(color: Colors.white)),
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -113,6 +157,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 // After the frame, ensure we scroll to bottom so newest messages are visible
                 WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
+                // Compute index of first unread incoming message so we can render a WhatsApp-like
+                // 'New messages' divider at that point. We treat messages as unread when
+                // 'read' == false and senderId != current user.
+                final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                final firstUnreadIndex = docs.indexWhere((m) {
+                  final data = m.data() as Map<String, dynamic>;
+                  final sender = data['senderId'] as String?;
+                  return (data['read'] == false) && (sender != null && sender != currentUid);
+                });
+
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: false,
@@ -129,6 +183,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     DateTime? dt;
                     if (ts is Timestamp) dt = ts.toDate().toLocal();
 
+                    // Unread state is handled via the 'New messages' divider below.
+
                     // Grouping: hide avatar+name when previous message (chronologically) is from same sender
                     bool showHeader = true;
                     if (index > 0) {
@@ -137,10 +193,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (prevSender != null && prevSender == senderId) showHeader = false;
                     }
 
-                    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-                    final isMe = senderId != null && senderId == currentUid;
                     final theme = Theme.of(context);
                     final msgId = message.id;
+                    final isMe = senderId != null && senderId == currentUid;
 
                     // Helper handlers for press-and-hold to show exact time
                     void handleTapDown(TapDownDetails d) {
@@ -162,9 +217,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     final showExact = _activeMessageId == msgId && dt != null;
 
+                    // Build the message bubble widget first, then optionally insert a
+                    // WhatsApp-style 'New messages' divider before the first unread message.
+                    Widget messageWidget;
                     if (isMe) {
-                      // Right-aligned bubble for messages sent by the current user
-                      return GestureDetector(
+                      messageWidget = GestureDetector(
                         onTapDown: handleTapDown,
                         onTapUp: handleTapUp,
                         onTapCancel: handleTapCancel,
@@ -196,55 +253,72 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       );
-                    }
-
-                    // Left-aligned bubble for messages from others
-                    return GestureDetector(
-                      onTapDown: handleTapDown,
-                      onTapUp: handleTapUp,
-                      onTapCancel: handleTapCancel,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showHeader)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 12.0),
-                                  child: senderPhoto != null
-                                      ? CircleAvatar(backgroundImage: NetworkImage(senderPhoto))
-                                      : CircleAvatar(child: Text(senderName.isNotEmpty ? senderName[0].toUpperCase() : '?')),
-                                )
-                              else
-                                const SizedBox(width: 48),
-                              ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.70),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (showHeader) Text(senderName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      padding: const EdgeInsets.all(12.0),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.surface,
-                                        borderRadius: BorderRadius.circular(8),
+                    } else {
+                      messageWidget = GestureDetector(
+                        onTapDown: handleTapDown,
+                        onTapUp: handleTapUp,
+                        onTapCancel: handleTapCancel,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (showHeader)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 12.0),
+                                    child: senderPhoto != null
+                                        ? CircleAvatar(backgroundImage: NetworkImage(senderPhoto))
+                                        : CircleAvatar(child: Text(senderName.isNotEmpty ? senderName[0].toUpperCase() : '?')),
+                                  )
+                                else
+                                  const SizedBox(width: 48),
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.70),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (showHeader) Text(senderName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.all(12.0),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.surface,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(text),
                                       ),
-                                      child: Text(text),
-                                    ),
-                                    if (showExact) const SizedBox(height: 6),
-                                    if (showExact)
-                                        Text(DateFormat.yMMMd().add_jm().format(dt), style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
-                                  ],
+                                      if (showExact) const SizedBox(height: 6),
+                                      if (showExact)
+                                          Text(DateFormat.yMMMd().add_jm().format(dt), style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    }
+
+                    // If this index is where unread messages start, render a centered divider
+                    // similar to WhatsApp's 'new messages' marker.
+                    if (index == firstUnreadIndex) {
+                      final divider = Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                            decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(16)),
+                            child: const Text('New messages', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      );
+                      return Column(children: [divider, messageWidget]);
+                    }
+
+                    return messageWidget;
                   },
                 );
               },

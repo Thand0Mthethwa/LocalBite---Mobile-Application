@@ -6,6 +6,7 @@ import 'package:comchat/navigation_service.dart';
 import 'package:comchat/social_screen.dart';
 import 'package:comchat/trash_bin_tracker_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavigation extends StatefulWidget {
@@ -84,15 +85,55 @@ class _BottomNavigationState extends State<BottomNavigation> {
             _currentIndex = index;
           });
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Social',
-          ),
+  items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('messages')
+                    .where('read', isEqualTo: false)
+                    .snapshots(),
+                builder: (context, snap) {
+                  final uid = FirebaseAuth.instance.currentUser?.uid;
+                  final docs = snap.data?.docs ?? [];
+                  // Count distinct senderIds (chats) that have unread messages for the current user.
+                  final unreadChats = docs.where((d) {
+                    final data = d.data() as Map<String, dynamic>?;
+                    if (data == null) return false;
+                    final sender = data['senderId'] as String?;
+                    return sender == null || sender != uid;
+                  }).map((d) {
+                    final data = d.data() as Map<String, dynamic>?;
+                    return (data == null) ? null : (data['senderId'] as String? ?? '<unknown>');
+                  }).whereType<String>().toSet().length;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.people),
+                      if (unreadChats > 0)
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
+                            constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                            child: Center(
+                              child: Text(unreadChats > 99 ? '99+' : unreadChats.toString(),
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                        )
+                    ],
+                  );
+                },
+              ),
+              label: 'Social',
+            ),
           BottomNavigationBarItem(
             icon: Icon(Icons.delete),
             label: 'Trash',
