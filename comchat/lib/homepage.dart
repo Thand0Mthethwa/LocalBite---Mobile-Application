@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:comchat/navigation_service.dart';
 
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
@@ -92,12 +93,8 @@ class Homepage extends StatelessWidget {
   // a simple pop+push route (we keep this lightweight). If you prefer,
   // Provider or callback wiring may be applied instead.
   void _navigateTo(BuildContext context, int tabIndex) {
-    // Find the nearest Navigator and push the BottomNavigation again so that
-    // it rebuilds with the new index via a query parameter is an advanced
-    // option. For now we'll just show a SnackBar to indicate action.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Navigate to tab $tabIndex (implement routing)')),
-    );
+    // Update the global navIndex to request that BottomNavigation switch tabs.
+    navIndex.value = tabIndex;
   }
 }
 
