@@ -1,5 +1,6 @@
 import 'package:comchat/crime_reporting_screen.dart';
 import 'package:comchat/events_portal_screen.dart';
+import 'package:comchat/homepage.dart';
 import 'package:comchat/local_shop_registry_screen.dart';
 import 'package:comchat/social_screen.dart';
 import 'package:comchat/trash_bin_tracker_screen.dart';
@@ -16,6 +17,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
+    const Homepage(),
     const SocialScreen(),
     const TrashBinTrackerScreen(),
     const CrimeReportingScreen(),
@@ -35,6 +37,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
           });
         },
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people),
             label: 'Social',
