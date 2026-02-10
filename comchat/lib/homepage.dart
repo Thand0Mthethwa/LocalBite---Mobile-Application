@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:comchat/FirestoreService.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:comchat/repositories/report_repository.dart';
 import 'package:comchat/repositories/event_repository.dart';
 import 'package:comchat/repositories/shop_repository.dart';
@@ -87,6 +88,64 @@ class Homepage extends StatelessWidget {
                 onSubmitted: (q) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Search: $q')));
                 },
+              ),
+
+              const SizedBox(height: 12),
+
+              // Mini calendar preview (14-day horizontal)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  child: SizedBox(
+                    height: 80,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirestoreService().getCollectionStream('trash_pickups'),
+                      builder: (context, snap) {
+                        final docs = snap.data?.docs ?? [];
+                        final scheduled = <String>{};
+                        for (final d in docs) {
+                          final data = d.data() as Map<String, dynamic>;
+                          final ts = data['date'];
+                          if (ts is Timestamp) {
+                            final dt = ts.toDate();
+                            scheduled.add('${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}');
+                          }
+                        }
+
+                        final items = List.generate(14, (i) {
+                          final dt = DateTime.now().add(Duration(days: i));
+                          final key = '${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}';
+                          final isScheduled = scheduled.contains(key);
+                          return GestureDetector(
+                            onTap: () => navIndex.value = 2, // go to Trash tab
+                            child: Container(
+                              width: 64,
+                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: isScheduled ? theme.colorScheme.primary.withOpacity(0.12) : theme.colorScheme.surface,
+                                    child: Text('${dt.day}', style: TextStyle(color: isScheduled ? theme.colorScheme.primary : null)),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (isScheduled)
+                                    Container(width: 6, height: 6, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
+                                ],
+                              ),
+                            ),
+                          );
+                        });
+
+                        return ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: items,
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 18),
