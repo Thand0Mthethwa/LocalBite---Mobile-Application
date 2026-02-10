@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +15,9 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  Timer? _pressTimer;
+  String? _activeMessageId;
 
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
@@ -50,6 +54,8 @@ class _ChatScreenState extends State<ChatScreen> {
       'senderPhotoUrl': senderPhoto,
       'senderId': senderId,
     });
+    // Scroll to bottom after sending
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   Future<String?> _askForDisplayName(BuildContext context) async {
@@ -71,6 +77,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (ok == true) return controller.text.trim();
     return null;
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +110,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     return 0;
                   });
 
+                // After the frame, ensure we scroll to bottom so newest messages are visible
+                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
                 return ListView.builder(
+                  controller: _scrollController,
                   reverse: false,
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
@@ -117,16 +129,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     DateTime? dt;
                     if (ts is Timestamp) dt = ts.toDate().toLocal();
 
-                    String timeLabel = '';
-                    if (dt != null) {
-                      final now = DateTime.now();
-                      if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-                        timeLabel = DateFormat.jm().format(dt);
-                      } else {
-                        timeLabel = DateFormat.yMMMd().add_jm().format(dt);
-                      }
-                    }
-
                     // Grouping: hide avatar+name when previous message (chronologically) is from same sender
                     bool showHeader = true;
                     if (index > 0) {
@@ -135,46 +137,112 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (prevSender != null && prevSender == senderId) showHeader = false;
                     }
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (showHeader)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: senderPhoto != null
-                                  ? CircleAvatar(backgroundImage: NetworkImage(senderPhoto))
-                                  : CircleAvatar(child: Text(senderName.isNotEmpty ? senderName[0].toUpperCase() : '?')),
-                            )
-                          else
-                            const SizedBox(width: 48),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (showHeader)
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(senderName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                      Text(timeLabel, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
-                                    ],
+                    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                    final isMe = senderId != null && senderId == currentUid;
+                    final theme = Theme.of(context);
+                    final msgId = message.id;
+
+                    // Helper handlers for press-and-hold to show exact time
+                    void handleTapDown(TapDownDetails d) {
+                      _pressTimer?.cancel();
+                      _pressTimer = Timer(const Duration(seconds: 2), () {
+                        setState(() => _activeMessageId = msgId);
+                      });
+                    }
+
+                    void handleTapUp(TapUpDetails d) {
+                      _pressTimer?.cancel();
+                      if (_activeMessageId == msgId) setState(() => _activeMessageId = null);
+                    }
+
+                    void handleTapCancel() {
+                      _pressTimer?.cancel();
+                      if (_activeMessageId == msgId) setState(() => _activeMessageId = null);
+                    }
+
+                    final showExact = _activeMessageId == msgId && dt != null;
+
+                    if (isMe) {
+                      // Right-aligned bubble for messages sent by the current user
+                      return GestureDetector(
+                        onTapDown: handleTapDown,
+                        onTapUp: handleTapUp,
+                        onTapCancel: handleTapCancel,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (showHeader) Text(senderName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.all(12.0),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(text, style: TextStyle(color: theme.colorScheme.onPrimary)),
                                   ),
-                                if (!showHeader) Text(timeLabel, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.all(12.0),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(text),
-                                ),
-                              ],
+                                  if (showExact) const SizedBox(height: 6),
+                                  if (showExact)
+                                    Text(DateFormat.yMMMd().add_jm().format(dt), style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
+                        ),
+                      );
+                    }
+
+                    // Left-aligned bubble for messages from others
+                    return GestureDetector(
+                      onTapDown: handleTapDown,
+                      onTapUp: handleTapUp,
+                      onTapCancel: handleTapCancel,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (showHeader)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: senderPhoto != null
+                                      ? CircleAvatar(backgroundImage: NetworkImage(senderPhoto))
+                                      : CircleAvatar(child: Text(senderName.isNotEmpty ? senderName[0].toUpperCase() : '?')),
+                                )
+                              else
+                                const SizedBox(width: 48),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.70),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (showHeader) Text(senderName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(text),
+                                    ),
+                                    if (showExact) const SizedBox(height: 6),
+                                    if (showExact)
+                                        Text(DateFormat.yMMMd().add_jm().format(dt), style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -204,5 +272,26 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    try {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    } catch (_) {
+      // If animate fails (e.g., no position), ignore.
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    _pressTimer?.cancel();
+    super.dispose();
   }
 }
