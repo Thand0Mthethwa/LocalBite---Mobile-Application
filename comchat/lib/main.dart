@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'bottom_navigation.dart';
 import 'theme.dart';
+import 'auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       title: 'Community App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const BottomNavigation(),
+      home: const AuthGate(),
     );
   }
 }

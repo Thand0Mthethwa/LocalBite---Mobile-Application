@@ -57,7 +57,7 @@ class _CrimeReportingScreenState extends State<CrimeReportingScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           // For demo: add a simple report
-          await _vm.addReport('Test Report', 'Created from MVVM refactor');
+          await _vm.addReport('Report Crime', 'Created from MVVM refactor');
         },
         child: Icon(Icons.add),
       ),
