@@ -147,7 +147,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Card(
-                  elevation: 8,
+                  color: theme.colorScheme.surface,
+                  elevation: 10,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -155,15 +156,24 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Logo / brand mark
+                        Center(
+                          child: CircleAvatar(
+                            radius: 36,
+                            backgroundColor: theme.colorScheme.primary,
+                            child: Icon(Icons.group, size: 36, color: theme.colorScheme.onPrimary),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           'Welcome back',
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Sign in to continue',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onBackground.withOpacity(0.7)),
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
@@ -181,38 +191,86 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           const SizedBox(height: 8),
                         ],
 
+                        // Email
                         TextField(
                           controller: _emailCtrl,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Email',
-                            prefixIcon: Icon(Icons.email),
+                            prefixIcon: Icon(Icons.email, color: theme.colorScheme.primary),
+                            filled: true,
+                            fillColor: theme.colorScheme.surface,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                            ),
                           ),
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 12),
+
+                        // Password
                         TextField(
                           controller: _passwordCtrl,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock),
+                            prefixIcon: Icon(Icons.lock, color: theme.colorScheme.primary),
+                            filled: true,
+                            fillColor: theme.colorScheme.surface,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                            ),
                           ),
                           obscureText: true,
                         ),
                         const SizedBox(height: 20),
+
+                        // Primary action
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
                           onPressed: _loading ? null : _signIn,
                           child: _loading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 18,
                                   width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary),
                                 )
                               : const Text('Sign in'),
                         ),
                         const SizedBox(height: 8),
+
+                        // Secondary action
                         OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                            side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
                           onPressed: _loading ? null : _register,
                           child: const Text('Create account'),
+                        ),
+                        const SizedBox(height: 8),
+
+                        TextButton(
+                          onPressed: () {
+                            // placeholder for forgot password
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Forgot password tapped')));
+                          },
+                          child: Text('Forgot password?', style: TextStyle(color: theme.colorScheme.primary)),
                         ),
                       ],
                     ),

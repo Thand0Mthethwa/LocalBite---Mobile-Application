@@ -69,27 +69,44 @@ class _ChatScreenState extends State<ChatScreen> {
     // When opening the chat screen, mark incoming unread messages as read so the badge clears
     // (WhatsApp-like behaviour: opening the chat clears unread counts).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _markIncomingAsRead();
+      markIncomingAsRead();
     });
   }
 
-  Future<void> _markIncomingAsRead() async {
+  /// Marks incoming unread messages as read for the current user.
+  ///
+  /// Returns the number of documents updated. This method intentionally
+  /// queries all documents with `read == false` and performs a client-side
+  /// filter to ensure we mark only messages where the sender is not the
+  /// current user (including messages with null senderId). Doing the
+  /// filtering client-side avoids edge cases with Firestore's `isNotEqualTo`.
+  Future<int> markIncomingAsRead() async {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid == null) return;
+    if (currentUid == null) return 0;
     try {
       final snap = await FirebaseFirestore.instance
           .collection('messages')
           .where('read', isEqualTo: false)
-          .where('senderId', isNotEqualTo: currentUid)
           .get();
-      if (snap.docs.isEmpty) return;
+      if (snap.docs.isEmpty) return 0;
       final batch = FirebaseFirestore.instance.batch();
+      var updated = 0;
       for (var doc in snap.docs) {
-        batch.update(doc.reference, {'read': true});
+        final sender = (doc.data() as dynamic)['senderId'] as String?;
+        // mark as read only if sender is not the current user
+        if (sender == null || sender != currentUid) {
+          batch.update(doc.reference, {'read': true});
+          updated++;
+        }
       }
-      await batch.commit();
-    } catch (_) {
-      // ignore failures for now — this improves UX but isn't critical
+      if (updated > 0) await batch.commit();
+      return updated;
+    } catch (e, st) {
+      // Log the error so developers can see why updates may fail.
+      // Don't crash the UI; return 0 to indicate nothing was updated.
+      // ignore: avoid_print
+      print('markIncomingAsRead error: $e\n$st');
+      return 0;
     }
   }
 
@@ -123,8 +140,10 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              await _markIncomingAsRead();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Marked all as read')));
+              final updated = await markIncomingAsRead();
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(updated > 0 ? 'Marked $updated messages as read' : 'No unread messages')),
+              );
             },
             child: const Text('Mark all read', style: TextStyle(color: Colors.white)),
           )
