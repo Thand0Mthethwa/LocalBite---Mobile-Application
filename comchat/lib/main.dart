@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'bottom_navigation.dart';
+import 'theme.dart';
+import 'auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +19,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Community App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const BottomNavigation(),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      home: const AuthGate(),
     );
   }
 }
