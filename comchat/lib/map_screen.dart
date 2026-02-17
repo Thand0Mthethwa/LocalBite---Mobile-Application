@@ -18,6 +18,10 @@ class _MapScreenState extends State<MapScreen> {
   late final ReportRepository _reportRepository;
   GoogleMapController? _mapController;
   StreamSubscription<Position>? _positionStreamSubscription;
+  Placemark? _placemark;
+  bool _isMapFullScreen = false;
+  bool _isLoading = true;
+  CameraPosition? _initialCameraPosition;
 
   @override
   void initState() {
@@ -96,35 +100,38 @@ class _MapScreenState extends State<MapScreen> {
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
 
+    final position = await Geolocator.getCurrentPosition();
+    _updateMapWithPosition(position);
+
     _positionStreamSubscription = Geolocator.getPositionStream().listen((position) {
       _updateMapWithPosition(position);
     });
   }
 
-  Future<void> _getCurrentLocation() async {
+  Future<void> _getCurrentLocationAndPlacemark() async {
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
 
     final position = await Geolocator.getCurrentPosition();
     _updateMapWithPosition(position);
+  }
+
+  void _updateMapWithPosition(Position position) async {
+    if (!mounted) return;
 
     final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
 
-    if (mounted && placemarks.isNotEmpty) {
-      final placemark = placemarks.first;
-      final address =
-          '${placemark.street}, ${placemark.locality}, ${placemark.subAdministrativeArea}, ${placemark.administrativeArea}';
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Current Location: $address'),
-      ));
-    }
-  }
-
-  void _updateMapWithPosition(Position position) {
-    if (!mounted) return;
-
     setState(() {
+      _isLoading = false;
+      if (placemarks.isNotEmpty) {
+        _placemark = placemarks.first;
+      }
+
+      _initialCameraPosition = CameraPosition(
+        target: LatLng(position.latitude, position.longitude),
+        zoom: 14,
+      );
+
       _markers.removeWhere((m) => m.markerId.value == 'currentLocation');
       _markers.add(
         Marker(
@@ -138,32 +145,69 @@ class _MapScreenState extends State<MapScreen> {
 
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 14,
-        ),
+        _initialCameraPosition!,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Local Map'),
       ),
-      body: GoogleMap(
-        onMapCreated: (controller) {
-          _mapController = controller;
-        },
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(0, 0), // Default location
-          zoom: 2,
-        ),
-        markers: _markers,
-      ),
+      body: _isLoading || _initialCameraPosition == null
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isMapFullScreen = !_isMapFullScreen;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: _isMapFullScreen
+                        ? mediaQuery.size.height
+                        : mediaQuery.size.height * 0.5,
+                    width: mediaQuery.size.width,
+                    child: GoogleMap(
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                      },
+                      initialCameraPosition: _initialCameraPosition!,
+                      markers: _markers,
+                    ),
+                  ),
+                ),
+                if (_placemark != null && !_isMapFullScreen)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Card(
+                      margin: const EdgeInsets.all(16.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Your Location',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8.0),
+                            Text('Municipality: ${_placemark?.locality}'),
+                            Text(
+                                'Address: ${_placemark?.street}, ${_placemark?.subAdministrativeArea}, ${_placemark?.administrativeArea}'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _getCurrentLocation,
+        onPressed: _getCurrentLocationAndPlacemark,
         tooltip: 'Get Current Location',
         child: const Icon(Icons.my_location),
       ),

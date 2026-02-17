@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'FirestoreService.dart';
+import 'firestore_service.dart';
 import 'controllers/chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
