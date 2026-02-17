@@ -5,12 +5,16 @@ class CrimeReport {
   final String title;
   final String description;
   final Timestamp createdAt;
+  final double? latitude;
+  final double? longitude;
 
   CrimeReport({
     required this.id,
     required this.title,
     required this.description,
     required this.createdAt,
+    this.latitude,
+    this.longitude,
   });
 
   factory CrimeReport.fromDoc(QueryDocumentSnapshot doc) {
@@ -20,6 +24,8 @@ class CrimeReport {
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       createdAt: data['createdAt'] ?? Timestamp.now(),
+      latitude: data['latitude'] as double?,
+      longitude: data['longitude'] as double?,
     );
   }
 }

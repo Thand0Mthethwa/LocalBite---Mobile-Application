@@ -65,7 +65,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     // show a quick confirmation to the sender
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Message sent')));
     // Scroll to bottom after sending
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
@@ -123,9 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
               final messenger = ScaffoldMessenger.of(context);
               final updated = await _controller.markIncomingAsRead();
               if (!mounted) return;
-              messenger.showSnackBar(
-                SnackBar(content: Text(updated > 0 ? 'Marked $updated messages as read' : 'No unread messages')),
-              );
+            
             },
             child: const Text('Mark all read', style: TextStyle(color: Colors.white)),
           )
