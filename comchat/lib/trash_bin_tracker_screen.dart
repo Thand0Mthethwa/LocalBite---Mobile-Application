@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:comchat/FirestoreService.dart';
+import 'package:comchat/firestore_service.dart';
 
 class TrashBinTrackerScreen extends StatefulWidget {
   const TrashBinTrackerScreen({super.key});
