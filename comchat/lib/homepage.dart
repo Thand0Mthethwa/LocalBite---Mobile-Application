@@ -1,7 +1,7 @@
 import 'package:comchat/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:comchat/navigation_service.dart';
-import 'package:comchat/FirestoreService.dart';
+import 'package:comchat/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:comchat/repositories/report_repository.dart';
