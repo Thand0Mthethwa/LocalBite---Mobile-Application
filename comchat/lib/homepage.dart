@@ -1,7 +1,9 @@
+import 'package:comchat/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:comchat/FirestoreService.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:comchat/repositories/report_repository.dart';
 import 'package:comchat/repositories/event_repository.dart';
 import 'package:comchat/repositories/shop_repository.dart';
@@ -24,8 +26,10 @@ class Homepage extends StatelessWidget {
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
-              // profile action (expand later)
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile tapped')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
             },
             icon: const CircleAvatar(child: Icon(Icons.person)),
           ),
@@ -214,6 +218,41 @@ class Homepage extends StatelessWidget {
                     color: theme.colorScheme.primary,
                     onTap: () => _navigateTo(context, 1),
                   ),
+                  // Prominent Report Crime CTA
+                  GestureDetector(
+                    onTap: () => _navigateTo(context, 3),
+                    child: Container(
+                      width: 180,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 6)),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: theme.colorScheme.secondary,
+                            child: Icon(Icons.report, color: theme.colorScheme.onSecondary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Report Crime', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800, color: theme.colorScheme.onSecondaryContainer)),
+                                const SizedBox(height: 4),
+                                Text('Quickly report incidents', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSecondaryContainer.withOpacity(0.9))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   _CtaButton(
                     icon: Icons.delete,
                     label: 'Trash',
@@ -235,7 +274,127 @@ class Homepage extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+
+                  // Nearby events carousel
+                  Text('Nearby events', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 120,
+                    child: StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: eventRepo.watchLatestEvents(limit: 10),
+                      builder: (context, snap) {
+                        final events = snap.data ?? [];
+                        if (events.isEmpty) {
+                          return Center(child: Text('No upcoming events', style: theme.textTheme.bodySmall));
+                        }
+                        // ensure events are sorted ascending by startAt when possible
+                        events.sort((a, b) {
+                          final ta = a['startAt'];
+                          final tb = b['startAt'];
+                          DateTime? da, db;
+                          if (ta is Timestamp) da = ta.toDate();
+                          if (tb is Timestamp) db = tb.toDate();
+                          if (da != null && db != null) return da.compareTo(db);
+                          return 0;
+                        });
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: events.length,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          itemBuilder: (context, index) {
+                            final e = events[index];
+                            final title = (e['title'] as String?) ?? 'Event';
+                            final startAt = e['startAt'];
+                            String when = '';
+                            if (startAt is Timestamp) when = DateFormat.MMMd().add_jm().format(startAt.toDate().toLocal());
+                            final color = theme.colorScheme.primary.withOpacity(0.08);
+                            return GestureDetector(
+                              onTap: () => _navigateTo(context, 5),
+                              child: Container(
+                                width: 220,
+                                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(title, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                    const Spacer(),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.calendar_today, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                                        const SizedBox(width: 6),
+                                        Text(when, style: theme.textTheme.bodySmall),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+              // Community activity feed
+              const SizedBox(height: 6),
+              Text('Community activity', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirestoreService().getCollectionStream('messages'),
+                    builder: (context, snap) {
+                      final docs = snap.data?.docs ?? [];
+                      // sort descending by timestamp
+                      docs.sort((a, b) {
+                        final ta = (a.data() as Map<String, dynamic>)['timestamp'];
+                        final tb = (b.data() as Map<String, dynamic>)['timestamp'];
+                        if (ta is Timestamp && tb is Timestamp) return tb.compareTo(ta);
+                        if (ta is Timestamp) return -1;
+                        if (tb is Timestamp) return 1;
+                        return 0;
+                      });
+                      final items = docs.take(4).toList();
+                      if (items.isEmpty) {
+                        return ListTile(
+                          leading: Icon(Icons.forum, color: theme.colorScheme.primary),
+                          title: const Text('No recent community posts'),
+                          subtitle: const Text('Be the first to say hello!'),
+                          onTap: () => _navigateTo(context, 1),
+                        );
+                      }
+                      return Column(
+                        children: items.map((d) {
+                          final data = d.data() as Map<String, dynamic>;
+                          final text = data['text'] as String? ?? '';
+                          final sender = data['senderName'] as String? ?? 'Someone';
+                          final photo = data['senderPhotoUrl'] as String?;
+                          final ts = data['timestamp'];
+                          String when = '';
+                          if (ts is Timestamp) {
+                            when = DateFormat.yMMMd().add_jm().format(ts.toDate().toLocal());
+                          }
+                          return ListTile(
+                            leading: photo != null ? CircleAvatar(backgroundImage: NetworkImage(photo)) : CircleAvatar(child: Text(sender.isNotEmpty ? sender[0].toUpperCase() : '?')),
+                            title: Text(sender, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            trailing: Text(when, style: theme.textTheme.bodySmall),
+                            onTap: () => _navigateTo(context, 1),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
                 'Recent activity',
                 style: theme.textTheme.titleMedium,

@@ -21,11 +21,13 @@ class _CrimeReportingScreenState extends State<CrimeReportingScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Cannot place call to $number')),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error trying to call $number')),
       );
