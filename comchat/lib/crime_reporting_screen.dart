@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:comchat/FirestoreService.dart';
+import 'package:comchat/firestore_service.dart';
 import 'package:comchat/repositories/report_repository.dart';
 import 'package:comchat/viewmodels/crime_reporting_viewmodel.dart';
 import 'package:comchat/models/crime_report.dart';
