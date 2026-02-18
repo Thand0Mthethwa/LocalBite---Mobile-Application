@@ -93,8 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building ProfileScreen");
-    print("User: $_user");
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -104,17 +102,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance.collection('users').doc(_user!.uid).get(),
               builder: (context, snapshot) {
-                print("FutureBuilder state: ${snapshot.connectionState}");
-                if (snapshot.hasError) {
-                  print("FutureBuilder error: ${snapshot.error}");
-                  return const Center(child: Text('Something went wrong.'));
-                }
-
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || !snapshot.data!.exists) {
-                  print("FutureBuilder no data or user does not exist");
                   return const Center(child: Text('User data not found.'));
                 }
 
@@ -202,3 +193,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
