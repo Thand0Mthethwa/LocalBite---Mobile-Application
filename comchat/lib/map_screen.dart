@@ -20,13 +20,16 @@ class _MapScreenState extends State<MapScreen> {
   StreamSubscription<Position>? _positionStreamSubscription;
   Placemark? _placemark;
   bool _isMapFullScreen = false;
-  bool _isLoading = true;
   CameraPosition? _initialCameraPosition;
 
   @override
   void initState() {
     super.initState();
     _reportRepository = ReportRepository(FirestoreService());
+    _initialCameraPosition = const CameraPosition(
+      target: LatLng(0, 0),
+      zoom: 2,
+    );
     _loadCrimeReports();
     _startLocationUpdates();
   }
@@ -122,7 +125,6 @@ class _MapScreenState extends State<MapScreen> {
     final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
 
     setState(() {
-      _isLoading = false;
       if (placemarks.isNotEmpty) {
         _placemark = placemarks.first;
       }
@@ -157,9 +159,7 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('Local Map'),
       ),
-      body: _isLoading || _initialCameraPosition == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
+      body: Stack(
               children: [
                 GestureDetector(
                   onTap: () {
