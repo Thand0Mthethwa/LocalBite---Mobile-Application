@@ -7,7 +7,7 @@ This is a Flutter project for a community app.
 - Added `firebase_core` and `cloud_firestore` to `pubspec.yaml`.
 - Initialized Firebase in `lib/main.dart`.
 - Created a placeholder `lib/firebase_options.dart` file.
-- Created a `lib/FirestoreService.dart` file with a basic Firestore service.
+- Created a `lib/firestore_service.dart` file with a basic Firestore service.
 
 ## Next Steps
 

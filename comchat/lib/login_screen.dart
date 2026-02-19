@@ -72,15 +72,13 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Signed in successfully')),
-      );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sign in failed: ${e.message}')),
       );
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -91,20 +89,23 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created and signed in')),
       );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration failed: ${e.message}')),
       );
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _signOut() async {
     await _auth.signOut();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Signed out')),
     );
