@@ -1,5 +1,6 @@
 import 'package:comchat/announcements_screen.dart';
 import 'package:comchat/chat_screen.dart';
+import 'package:comchat/controllers/chat_controller.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:flutter/material.dart';
 
@@ -13,16 +14,18 @@ class SocialScreen extends StatefulWidget {
 class _SocialScreenState extends State<SocialScreen> {
   int _currentIndex = 0;
 
-  final GlobalKey _chatKey = GlobalKey();
+  // Use a typed controller instead of relying on GlobalKey/currentState casts.
+  late final ChatController _chatController;
 
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    // initialize screens here so we can provide the key to the ChatScreen
+    // initialize screens here and provide the typed controller to ChatScreen
+    _chatController = ChatController();
     _screens = [
-      ChatScreen(key: _chatKey),
+      ChatScreen(controller: _chatController),
       const AnnouncementsScreen(),
     ];
 
@@ -40,16 +43,10 @@ class _SocialScreenState extends State<SocialScreen> {
 
   void _handleNavIndex() {
     if (navIndex.value == 1 && _currentIndex == 0) {
-      // call the ChatScreen state's public markIncomingAsRead method if available
+      // call the typed controller to mark incoming messages as read
       try {
-        final state = _chatKey.currentState;
-        if (state != null) {
-          // use a dynamic call to avoid referencing private State type
-          (state as dynamic).markIncomingAsRead();
-        }
-      } catch (_) {
-        // ignore errors calling into the child state
-      }
+        _chatController.markIncomingAsRead();
+      } catch (_) {}
     }
   }
 
@@ -67,8 +64,7 @@ class _SocialScreenState extends State<SocialScreen> {
           // already on Social, ensure unread messages are marked read.
           if (index == 0 && navIndex.value == 1) {
             try {
-              final state = _chatKey.currentState;
-              if (state != null) (state as dynamic).markIncomingAsRead();
+              _chatController.markIncomingAsRead();
             } catch (_) {}
           }
         },

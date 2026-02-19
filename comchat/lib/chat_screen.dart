@@ -3,10 +3,15 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'FirestoreService.dart';
+import 'firestore_service.dart';
+import 'controllers/chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  /// Optional external controller. If not provided the screen will create
+  /// an internal controller for local operations.
+  final ChatController? controller;
+
+  const ChatScreen({super.key, this.controller});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -18,6 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _pressTimer;
   String? _activeMessageId;
+  late final ChatController _controller;
   
 
   void _sendMessage() {
@@ -58,7 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'read': false,
     });
     // show a quick confirmation to the sender
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Message sent')));
+    if (!mounted) return;
     // Scroll to bottom after sending
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
@@ -66,10 +72,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _controller = widget.controller ?? ChatController();
     // When opening the chat screen, mark incoming unread messages as read so the badge clears
     // (WhatsApp-like behaviour: opening the chat clears unread counts).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      markIncomingAsRead();
+      _controller.markIncomingAsRead();
     });
   }
 
@@ -80,35 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// filter to ensure we mark only messages where the sender is not the
   /// current user (including messages with null senderId). Doing the
   /// filtering client-side avoids edge cases with Firestore's `isNotEqualTo`.
-  Future<int> markIncomingAsRead() async {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid == null) return 0;
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('messages')
-          .where('read', isEqualTo: false)
-          .get();
-      if (snap.docs.isEmpty) return 0;
-      final batch = FirebaseFirestore.instance.batch();
-      var updated = 0;
-      for (var doc in snap.docs) {
-        final sender = (doc.data() as dynamic)['senderId'] as String?;
-        // mark as read only if sender is not the current user
-        if (sender == null || sender != currentUid) {
-          batch.update(doc.reference, {'read': true});
-          updated++;
-        }
-      }
-      if (updated > 0) await batch.commit();
-      return updated;
-    } catch (e, st) {
-      // Log the error so developers can see why updates may fail.
-      // Don't crash the UI; return 0 to indicate nothing was updated.
-      // ignore: avoid_print
-      print('markIncomingAsRead error: $e\n$st');
-      return 0;
-    }
-  }
+  // markIncomingAsRead moved to ChatController
 
   Future<String?> _askForDisplayName(BuildContext context) async {
     final controller = TextEditingController();
@@ -140,10 +119,10 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              final updated = await markIncomingAsRead();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(updated > 0 ? 'Marked $updated messages as read' : 'No unread messages')),
-              );
+              final messenger = ScaffoldMessenger.of(context);
+              final updated = await _controller.markIncomingAsRead();
+              if (!mounted) return;
+            
             },
             child: const Text('Mark all read', style: TextStyle(color: Colors.white)),
           )
@@ -209,7 +188,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (index > 0) {
                       final prev = docs[index - 1];
                       final prevSender = (prev.data() as Map<String, dynamic>)['senderId'] as String?;
-                      if (prevSender != null && prevSender == senderId) showHeader = false;
+                      if (prevSender != null && prevSender == senderId) {
+                        showHeader = false;
+                      }
                     }
 
                     final theme = Theme.of(context);

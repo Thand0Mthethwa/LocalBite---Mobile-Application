@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:comchat/FirestoreService.dart';
+import 'package:comchat/firestore_service.dart';
 
 class TrashBinTrackerScreen extends StatefulWidget {
   const TrashBinTrackerScreen({super.key});
@@ -32,6 +32,11 @@ class _TrashBinTrackerScreenState extends State<TrashBinTrackerScreen> {
 
   Future<void> _scheduleForDate(BuildContext context, DateTime day) async {
     final notesController = TextEditingController();
+    // The dialog uses the surrounding BuildContext; we capture the
+    // ScaffoldMessenger before awaiting and check `mounted` after the
+    // async operation to avoid using the context unsafely. Suppress the
+    // lint here as the usage is intentional and guarded.
+    // ignore: use_build_context_synchronously
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -48,13 +53,16 @@ class _TrashBinTrackerScreenState extends State<TrashBinTrackerScreen> {
     );
     if (ok != true) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+
     await _db.addDocument('trash_pickups', {
       'date': Timestamp.fromDate(DateTime(day.year, day.month, day.day)),
       'createdAt': Timestamp.now(),
       'notes': notesController.text.trim(),
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pickup scheduled for ${day.toLocal().toString().split(' ').first}')));
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text('Pickup scheduled for ${day.toLocal().toString().split(' ').first}')));
   }
 
   Future<void> _deletePickup(String docId) async {
