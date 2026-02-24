@@ -78,43 +78,52 @@ class Homepage extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Mini calendar preview (14-day horizontal)
+              // Mini calendar preview (7-day view)
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 120.0, horizontal: 12.0),
+                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
                   child: SizedBox(
                     height: 80,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirestoreService().getCollectionStream('trash_pickups'),
-                      builder: (context, snap) {
-                        final docs = snap.data?.docs ?? [];
-                        final scheduled = <String>{};
-                        for (final d in docs) {
-                          final data = d.data() as Map<String, dynamic>;
-                          final ts = data['date'];
-                          if (ts is Timestamp) {
-                            final dt = ts.toDate();
-                            scheduled.add('${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}');
-                          }
+                    child: Row(
+                      children: List.generate(7, (i) {
+                        final now = DateTime.now();
+                        final dt = now.add(Duration(days: i));
+                        // The schedule changes exactly two weeks from today.
+                        final changeDate = now.add(const Duration(days: 14));
+                        
+                        final bool isScheduled;
+                        if (dt.isBefore(changeDate)) {
+                          // Within the next two weeks, pickup is on Tuesday
+                          isScheduled = dt.weekday == DateTime.tuesday;
+                        } else {
+                          // After two weeks, pickup is on Thursday
+                          isScheduled = dt.weekday == DateTime.thursday;
                         }
 
-                        final items = List.generate(14, (i) {
-                          final dt = DateTime.now().add(Duration(days: i));
-                          final key = '${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}';
-                          final isScheduled = scheduled.contains(key);
-                          return DateItem(
+                        return Expanded(
+                          child: DateItem(
                             dt: dt,
                             isScheduled: isScheduled,
                             onTap: () => navIndex.value = 2, // go to Trash tab
-                          );
-                        });
-
-                        return ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: items,
+                          ),
                         );
-                      },
+                      }),
                     ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              
+              // Schedule change notification
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Center(
+                  child: Text(
+                    'Trash pickup changes to Thursdays starting ${DateFormat.yMMMMd().format(DateTime.now().add(const Duration(days: 14)))}.',
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
@@ -481,8 +490,7 @@ class _DateItemState extends State<DateItem>
       child: ScaleTransition(
         scale: _animation.drive(Tween(begin: 1.0, end: 1.15)),
         child: Container(
-          width: 64,
-          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 4), // Use padding instead of margin
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
