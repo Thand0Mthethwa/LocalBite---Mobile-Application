@@ -65,7 +65,7 @@ class Homepage extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Connect, report, and find local services in your community.',
+                      'Connect, report, and find local services in your area.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onPrimary.withOpacity(0.9),
                       ),
@@ -270,6 +270,12 @@ class Homepage extends StatelessWidget {
                     label: 'Shops',
                     color: theme.colorScheme.secondary,
                     onTap: () => _navigateTo(context, 4),
+                  ),
+                  _CtaButton(
+                    icon: Icons.event,
+                    label: 'Events',
+                    color: theme.colorScheme.primary,
+                    onTap:() => _navigateTo(context, 5),
                   ),
                 ],
               ),
