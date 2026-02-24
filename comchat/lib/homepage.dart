@@ -20,7 +20,7 @@ class Homepage extends StatelessWidget {
   final shopRepo = ShopRepository();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Community Hub'),
+        title: Text('Community Page'),
         elevation: 0,
         actions: [
           IconButton(
@@ -76,30 +76,12 @@ class Homepage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Search field
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search reports, shops, events',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: theme.colorScheme.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                textInputAction: TextInputAction.search,
-                onSubmitted: (q) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Search: $q')));
-                },
-              ),
-
               const SizedBox(height: 12),
 
               // Mini calendar preview (14-day horizontal)
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  padding: const EdgeInsets.symmetric(vertical: 120.0, horizontal: 12.0),
                   child: SizedBox(
                     height: 80,
                     child: StreamBuilder<QuerySnapshot>(
@@ -124,18 +106,18 @@ class Homepage extends StatelessWidget {
                             onTap: () => navIndex.value = 2, // go to Trash tab
                             child: Container(
                               width: 64,
-                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                              margin: const EdgeInsets.symmetric(horizontal: 10),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Text(DateFormat.E().format(dt), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                                  const SizedBox(height: 4),
                                   CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: isScheduled ? theme.colorScheme.primary.withOpacity(0.12) : theme.colorScheme.surface,
-                                    child: Text('${dt.day}', style: TextStyle(color: isScheduled ? theme.colorScheme.primary : null)),
+                                    radius: 18,
+                                    backgroundColor: isScheduled ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant,
+                                    child: Text(dt.day.toString(), style: theme.textTheme.bodyMedium?.copyWith(color: isScheduled ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant)),
                                   ),
-                                  const SizedBox(height: 6),
-                                  if (isScheduled)
-                                    Container(width: 6, height: 6, decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle)),
+
                                 ],
                               ),
                             ),
@@ -276,7 +258,7 @@ class Homepage extends StatelessWidget {
                     label: 'Events',
                     color: theme.colorScheme.primary,
                     onTap:() => _navigateTo(context, 5),
-                  ),
+                  )
                 ],
               ),
 
