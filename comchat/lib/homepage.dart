@@ -102,25 +102,10 @@ class Homepage extends StatelessWidget {
                           final dt = DateTime.now().add(Duration(days: i));
                           final key = '${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}';
                           final isScheduled = scheduled.contains(key);
-                          return GestureDetector(
+                          return DateItem(
+                            dt: dt,
+                            isScheduled: isScheduled,
                             onTap: () => navIndex.value = 2, // go to Trash tab
-                            child: Container(
-                              width: 64,
-                              margin: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(DateFormat.E().format(dt), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7))),
-                                  const SizedBox(height: 4),
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: isScheduled ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant,
-                                    child: Text(dt.day.toString(), style: theme.textTheme.bodyMedium?.copyWith(color: isScheduled ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant)),
-                                  ),
-
-                                ],
-                              ),
-                            ),
                           );
                         });
 
@@ -435,6 +420,98 @@ class Homepage extends StatelessWidget {
   void _navigateTo(BuildContext context, int tabIndex) {
     // Update the global navIndex to request that BottomNavigation switch tabs.
     navIndex.value = tabIndex;
+  }
+}
+
+class DateItem extends StatefulWidget {
+  final DateTime dt;
+  final bool isScheduled;
+  final VoidCallback onTap;
+
+  const DateItem({
+    super.key,
+    required this.dt,
+    required this.isScheduled,
+    required this.onTap,
+  });
+
+  @override
+  State<DateItem> createState() => _DateItemState();
+}
+
+class _DateItemState extends State<DateItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    // Create a bounce-out curve
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut, // A curve that creates a springy/bouncy effect
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    // Trigger animation, then the callback
+    _controller.forward(from: 0.0).then((_) {
+      // Small delay for visual feedback before navigation
+      Future.delayed(const Duration(milliseconds: 100), widget.onTap);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _animation.drive(Tween(begin: 1.0, end: 1.15)),
+        child: Container(
+          width: 64,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                DateFormat.E().format(widget.dt),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 4),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: widget.isScheduled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceVariant,
+                child: Text(
+                  widget.dt.day.toString(),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: widget.isScheduled
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
