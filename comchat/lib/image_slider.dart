@@ -14,11 +14,9 @@ class _ImageSliderState extends State<ImageSlider> {
   Timer? _timer;
 
   final List<String> _imageUrls = [
-    'https://www.ekurhuleni.gov.za/about-the-city/priority-projects/urban-design/',
-    'https://picsum.photos/seed/picsum/200/300',
-    'https://picsum.photos/seed/picsum/200/300',
-    'https://picsum.photos/seed/picsum/200/300',
-    'https://picsum.photos/seed/picsum/200/300',
+    'assets/images/image1.jpg',
+    'assets/images/image2.jpg',
+    'assets/images/image3.jpg',
   ];
 
   @override
@@ -30,11 +28,13 @@ class _ImageSliderState extends State<ImageSlider> {
       } else {
         _currentPage = 0;
       }
-      _pageController.animateToPage(
-        _currentPage,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeIn,
-      );
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeIn,
+        );
+      }
     });
   }
 
@@ -60,7 +60,7 @@ class _ImageSliderState extends State<ImageSlider> {
               });
             },
             itemBuilder: (context, index) {
-              return Image.network(_imageUrls[index], fit: BoxFit.cover);
+              return Image.asset(_imageUrls[index], fit: BoxFit.cover);
             },
           ),
         ),
