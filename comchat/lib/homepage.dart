@@ -1,3 +1,4 @@
+import 'package:comchat/features_grid.dart';
 import 'package:comchat/image_slider.dart';
 import 'package:comchat/profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -78,6 +79,10 @@ class Homepage extends StatelessWidget {
               const SizedBox(height: 16),
 
               const ImageSlider(),
+
+              const SizedBox(height: 16),
+
+              const FeaturesGrid(),
 
             ],
           ),
