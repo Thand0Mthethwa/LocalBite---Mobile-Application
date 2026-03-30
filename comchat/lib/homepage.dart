@@ -12,6 +12,12 @@ class Homepage extends StatelessWidget {
       appBar: AppBar(
         toolbarHeight: 120,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            // Handle menu button press
+          },
+        ),
         automaticallyImplyLeading: false,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
