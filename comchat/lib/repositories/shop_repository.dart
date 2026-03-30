@@ -1,25 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:comchat/models/shop.dart';
 
 class ShopRepository {
-  final String collectionPath;
+  final FirebaseFirestore _firestore;
 
-  ShopRepository({this.collectionPath = 'shops'});
+  ShopRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  Stream<int> watchShopCountSince(Duration since) {
-    final from = Timestamp.fromDate(DateTime.now().subtract(since));
-    return FirebaseFirestore.instance
-        .collection(collectionPath)
-        .where('createdAt', isGreaterThan: from)
-        .snapshots()
-        .map((snap) => snap.size);
+  Stream<List<Shop>> getShops() {
+    return _firestore.collection('shops').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => Shop.fromJson(doc.data())).toList();
+    });
   }
 
-  Stream<List<Map<String, dynamic>>> watchLatestShops({int limit = 10}) {
-    return FirebaseFirestore.instance
-        .collection(collectionPath)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+  Future<void> addShop(Shop shop) {
+    return _firestore.collection('shops').doc(shop.id).set(shop.toJson());
+  }
+
+  Future<void> updateShop(Shop shop) {
+    return _firestore.collection('shops').doc(shop.id).update(shop.toJson());
   }
 }
