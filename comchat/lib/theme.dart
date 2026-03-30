@@ -5,7 +5,7 @@ class AppColors {
   AppColors._();
 
   // Primary brand color (deep blue)
-  static const Color primary = Color(0xFF0B3D91);
+  static const Color primary = Color.fromARGB(255, 222, 226, 233);
   static const Color onPrimary = Colors.white;
 
   // Accent / secondary (teal)
@@ -27,7 +27,7 @@ class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color.fromARGB(255, 8, 8, 8),
       primary: const Color.fromARGB(255, 28, 28, 29),
-      secondary: AppColors.secondary,
+      secondary: const Color.fromARGB(255, 78, 211, 45),
       surface: AppColors.surface,
       onPrimary: const Color.fromARGB(255, 248, 245, 245),
       onSecondary: const Color.fromARGB(255, 29, 235, 115),
@@ -37,9 +37,9 @@ class AppTheme {
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color.fromARGB(255, 0, 0, 0),
+      scaffoldBackgroundColor: const Color.fromARGB(255, 236, 222, 222),
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color.fromARGB(255, 10, 11, 12),
+        backgroundColor: const Color.fromARGB(255, 14, 124, 0),
         foregroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         centerTitle: false,
