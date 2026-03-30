@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+enum AuthMode { login, register }
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -10,8 +12,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+  AuthMode _authMode = AuthMode.login;
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
   bool _loading = false;
 
   late final AnimationController _motionController;
@@ -60,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
     _motionController.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -83,6 +88,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }
 
   Future<void> _register() async {
+    if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
     setState(() => _loading = true);
     try {
       await _auth.createUserWithEmailAndPassword(
@@ -101,6 +112,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _switchAuthMode() {
+    setState(() {
+      _authMode = _authMode == AuthMode.login ? AuthMode.register : AuthMode.login;
+    });
   }
 
   Future<void> _signOut() async {
@@ -123,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return GestureDetector(
       onTap: _pulse,
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         body: Stack(
           children: [
             // Animated spheres background
@@ -167,14 +184,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Welcome back',
+                          _authMode == AuthMode.login ? 'Welcome back' : 'Create an Account',
                           style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Sign in to continue',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                          _authMode == AuthMode.login ? 'Sign in to continue' : 'Please fill in the details to start',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(179)),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
@@ -202,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                             fillColor: theme.colorScheme.surface,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -223,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                             fillColor: theme.colorScheme.surface,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -232,6 +249,29 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           ),
                           obscureText: true,
                         ),
+
+                        if (_authMode == AuthMode.register) ...[
+                          const SizedBox(height: 12),
+                          // Confirm Password
+                          TextField(
+                            controller: _confirmPasswordCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Confirm Password',
+                              prefixIcon: Icon(Icons.lock, color: theme.colorScheme.primary),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                              ),
+                            ),
+                            obscureText: true,
+                          ),
+                        ],
                         const SizedBox(height: 20),
 
                         // Primary action
@@ -242,27 +282,26 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          onPressed: _loading ? null : _signIn,
+                          onPressed: _loading ? null : (_authMode == AuthMode.login ? _signIn : _register),
                           child: _loading
                               ? SizedBox(
                                   height: 18,
                                   width: 18,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary),
                                 )
-                              : const Text('Sign in'),
+                              : Text(_authMode == AuthMode.login ? 'Sign In' : 'Create Account'),
                         ),
                         const SizedBox(height: 8),
 
                         // Secondary action
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.colorScheme.primary,
-                            side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.12)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        TextButton(
+                          onPressed: _loading ? null : _switchAuthMode,
+                          child: Text(
+                            _authMode == AuthMode.login
+                                ? 'Don\'t have an account? Sign up'
+                                : 'Already have an account? Sign in',
+                            style: TextStyle(color: theme.colorScheme.primary),
                           ),
-                          onPressed: _loading ? null : _register,
-                          child: const Text('Create account'),
                         ),
                         const SizedBox(height: 8),
 
@@ -329,7 +368,7 @@ class _SpheresPainter extends CustomPainter {
       final scale = 1.0 + 0.15 * pulseValue * (1.0 - (s.speedFactor - 0.5) / 2.0);
       final radius = (s.size * 0.5) * scale;
 
-      paint.color = _colorForSeed(s.colorSeed).withOpacity(0.14 + 0.06 * pulseValue);
+      paint.color = _colorForSeed(s.colorSeed).withAlpha((36 + 15 * pulseValue).toInt());
       canvas.drawCircle(Offset(cx, cy), radius, paint);
     }
   }
@@ -339,8 +378,8 @@ class _SpheresPainter extends CustomPainter {
     final colors = [
       theme.colorScheme.primary,
       theme.colorScheme.secondary,
-      theme.colorScheme.primary.withOpacity(0.9),
-      theme.colorScheme.secondary.withOpacity(0.9),
+      theme.colorScheme.primary.withAlpha(230),
+      theme.colorScheme.secondary.withAlpha(230),
     ];
     return colors[seed % colors.length];
   }
