@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: _user == null
           ? const Center(child: Text('Please log in to see your profile.'))
           : FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(_user!.uid).get(),
+              future: FirebaseFirestore.instance.collection('users').doc(_user.uid).get(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
