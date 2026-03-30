@@ -10,7 +10,13 @@ class Homepage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight,
+        toolbarHeight: 120,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(30),          )
+        ),
         actions: [
           IconButton(
             icon:
