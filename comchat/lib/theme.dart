@@ -25,24 +25,22 @@ class AppColors {
 class AppTheme {
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      primary: AppColors.primary,
+      seedColor: const Color.fromARGB(255, 8, 8, 8),
+      primary: const Color.fromARGB(255, 28, 28, 29),
       secondary: AppColors.secondary,
-      background: AppColors.background,
       surface: AppColors.surface,
-      onPrimary: AppColors.onPrimary,
-      onSecondary: AppColors.onSecondary,
-      onSurface: AppColors.onSurface,
-      onBackground: AppColors.onBackground,
+      onPrimary: const Color.fromARGB(255, 248, 245, 245),
+      onSecondary: const Color.fromARGB(255, 29, 235, 115),
+      onSurface: AppColors.onBackground,
     );
 
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: const Color.fromARGB(255, 0, 0, 0),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.onPrimary,
+        backgroundColor: const Color.fromARGB(255, 10, 11, 12),
+        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         centerTitle: false,
       ),
@@ -51,9 +49,9 @@ class AppTheme {
         foregroundColor: AppColors.onSecondary,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.muted,
+        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+        selectedItemColor: const Color.fromARGB(255, 121, 132, 151),
+        unselectedItemColor: const Color.fromARGB(255, 255, 255, 255),
         showUnselectedLabels: true,
       ),
       // Card styling is intentionally minimal; prefer default elevated card styles.
