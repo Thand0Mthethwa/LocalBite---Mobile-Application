@@ -10,15 +10,15 @@ class Homepage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Food Stalls'),
-        elevation: 10,
+        toolbarHeight,
         actions: [
           IconButton(
-            tooltip: 'Settings',
+            icon:
+            Icon(Icons.notifications_none_outlined),
+
             onPressed: (){
              
             },
-            icon: const Icon(Icons.settings),
           ),
 
           IconButton(
@@ -56,13 +56,13 @@ class Homepage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Taste the best of your community',
+                      'LocalBite',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     Text(
                       'Find the best food stalls in your area.',
                       style: theme.textTheme.bodyMedium?.copyWith(
