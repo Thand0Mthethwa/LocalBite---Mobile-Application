@@ -20,6 +20,9 @@ class AppColors {
 
   // Muted text / disabled
   static const Color muted = Color(0xFF6B7280);
+
+  // Custom feature colors
+  static const Color headerGreen = Color(0xFF4CAF50);
 }
 
 class AppTheme {

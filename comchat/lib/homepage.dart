@@ -1,97 +1,89 @@
-import 'package:comchat/profile_screen.dart';
-import 'package:comchat/shop_list.dart';
 import 'package:flutter/material.dart';
+import 'package:comchat/theme.dart';
 
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 120,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            // Handle menu button press
-          },
-        ),
-        automaticallyImplyLeading: false,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(30),          )
-        ),
-        actions: [
-          IconButton(
-            icon:
-            Icon(Icons.notifications_none_outlined),
-
-            onPressed: (){
-             
-            },
-          ),
-
-          IconButton(
-            tooltip: 'Profile',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-            icon: const CircleAvatar(child: Icon(Icons.person)),
-          ),
-        ],
-
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Hero banner with brand gradient
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    // This page is hosted within BottomNavigation's Scaffold, so we only return the body content.
+    return Container(
+      color: Colors.grey[100], // Light background makes the green pop
+      child: Column(
+        children: [
+          // CUSTOM HEADER
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(
+              top: 50,
+              left: 20,
+              right: 20,
+              bottom: 40,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF388E3C), // A rich green like the mockup
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // TOP ICON ROW
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'LocalBite',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Find the best food stalls in your area.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary.withAlpha(230),
-                      ),
+                    const Icon(Icons.menu, color: Colors.white, size: 28),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.notifications_none,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 15),
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          child: const Icon(Icons.person, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              const ShopList(),
-
-            ],
+                const SizedBox(height: 30), // Gap before text
+                // BRANDING
+                const Text(
+                  'LocalBite',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Text(
+                  'Discover and buy local food with ease.',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
           ),
-        ),
+
+          // REST OF YOUR CONTENT (Budget Card, etc.)
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    // Place your "Your Food Budget" Card code here
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
