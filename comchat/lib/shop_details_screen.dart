@@ -1,4 +1,5 @@
 import 'package:comchat/models/shop.dart';
+import 'package:comchat/product_list.dart';
 import 'package:flutter/material.dart';
 
 class ShopDetailsScreen extends StatelessWidget {
@@ -59,6 +60,9 @@ class ShopDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text('Hours', style: theme.textTheme.titleLarge),
             Text('${shop.openingTime} - ${shop.closingTime}', style: theme.textTheme.bodyLarge),
+            const SizedBox(height: 16),
+            Text('Products', style: theme.textTheme.titleLarge),
+            const ProductList(),
           ],
         ),
       ),
