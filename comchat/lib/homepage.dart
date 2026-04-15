@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
 
-class Homepage extends StatelessWidget {
+class Homepage extends StatefulWidget {
   const Homepage({super.key});
+
+  @override
+  State<Homepage> createState() => _HomepageState();
+}
+
+class _HomepageState extends State<Homepage> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isShrunk = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // Increased shrink threshold to prevent bouncing when the budget card disappears
+    if (_scrollController.offset > 150 && !_isShrunk) {
+      setState(() {
+        _isShrunk = true;
+      });
+    } else if (_scrollController.offset <= 10 && _isShrunk) {
+      setState(() {
+        _isShrunk = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,14 +43,27 @@ class Homepage extends StatelessWidget {
       child: Column(
         children: [
           // 1. CUSTOM HEADER (Matches your Mockup)
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
             width: double.infinity,
-            padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 60),
-            decoration: const BoxDecoration(
-              color: Color(0xFF388E3C), // Rich Green
+            padding: EdgeInsets.only(
+              top: 50, 
+              left: 20, 
+              right: 20, 
+              bottom: _isShrunk ? 20 : 60,
+            ),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: const AssetImage('assets/images/Plate.jpg'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.5), // Dark overlay for text readability
+                  BlendMode.darken,
+                ),
+              ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+                bottomLeft: Radius.circular(_isShrunk ? 20 : 40),
+                bottomRight: Radius.circular(_isShrunk ? 20 : 40),
               ),
             ),
             child: Column(
@@ -40,18 +86,28 @@ class Homepage extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  'LocalBite',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: _isShrunk ? 10 : 30,
                 ),
-                const Text(
-                  'Discover and buy local food with ease.',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: _isShrunk ? 24 : 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      child: const Text('LocalBite'),
+                    ),
+                    if (!_isShrunk)
+                      const Text(
+                        'Discover and buy local food with ease.',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -59,17 +115,29 @@ class Homepage extends StatelessWidget {
 
           // 2. SCROLLABLE CONTENT AREA
           Expanded(
-            child: Transform.translate(
-              offset: const Offset(0, -30), // Pulls the content up to overlap the header
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              transform: Matrix4.translationValues(0, _isShrunk ? 0 : -40, 0),
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // FOOD BUDGET CARD
-                    _buildBudgetCard(),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: _isShrunk
+                          ? const SizedBox(width: double.infinity)
+                          : Column(
+                              children: [
+                                _buildBudgetCard(),
+                                const SizedBox(height: 25),
+                              ],
+                            ),
+                    ),
                     
-                    const SizedBox(height: 25),
                     _buildSectionHeader("Meal Recommendations"),
                     const SizedBox(height: 15),
                     _buildMealList(),
@@ -78,6 +146,9 @@ class Homepage extends StatelessWidget {
                     _buildSectionHeader("Local Offers & Deals"),
                     const SizedBox(height: 15),
                     _buildLocalDeals(),
+                    
+                    // Extra space at the bottom to ensure smooth scrolling without bouncing
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
