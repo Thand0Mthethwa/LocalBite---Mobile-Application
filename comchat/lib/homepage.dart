@@ -222,38 +222,64 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _buildMealList() {
+    final List<Map<String, String>> meals = [
+      {
+        "name": "Combo Meal",
+        "price": "R45.00",
+        "image": "assets/images/Combo Meal.jfif"
+      },
+      {
+        "name": "Braai Platter",
+        "price": "R120.00",
+        "image": "assets/images/Braai Platter.jfif"
+      },
+      {
+        "name": "Boerewors Rolls",
+        "price": "R30.00",
+        "image": "assets/images/Boerewors Rolls.jfif"
+      },
+    ];
+
     return SizedBox(
       height: 180,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: 3,
+        itemCount: meals.length,
         separatorBuilder: (context, index) => const SizedBox(width: 15),
         itemBuilder: (context, index) {
+          final meal = meals[index];
           return Container(
             width: 150,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   height: 100,
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                   ),
-                  child: const Center(child: Icon(Icons.fastfood, color: Colors.grey)),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                    child: Image.asset(
+                      meal["image"]!,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text("Healthy Wrap", style: TextStyle(fontWeight: FontWeight.bold)),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(meal["name"]!, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text("\R8.50", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(meal["price"]!, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
