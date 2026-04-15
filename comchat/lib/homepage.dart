@@ -112,7 +112,7 @@ class Homepage extends StatelessWidget {
                     color: Colors.orange,
                   ),
                 ),
-                const Text("\$150", style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text("\R150", style: TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(width: 20),
@@ -121,7 +121,7 @@ class Homepage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Your Food Budget", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text("Remaining: \$85", style: TextStyle(color: Colors.grey[600])),
+                  Text("Remaining: \R85", style: TextStyle(color: Colors.grey[600])),
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {},
@@ -182,7 +182,7 @@ class Homepage extends StatelessWidget {
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text("\$8.50", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  child: Text("\R8.50", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
