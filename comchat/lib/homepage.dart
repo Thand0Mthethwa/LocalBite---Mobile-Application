@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:comchat/meal_details_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -39,7 +40,7 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey[100], 
+      color: Colors.grey[100],
       child: Column(
         children: [
           // 1. CUSTOM HEADER (Matches your Mockup)
@@ -47,9 +48,9 @@ class _HomepageState extends State<Homepage> {
             duration: const Duration(milliseconds: 300),
             width: double.infinity,
             padding: EdgeInsets.only(
-              top: 50, 
-              left: 20, 
-              right: 20, 
+              top: 50,
+              left: 20,
+              right: 20,
               bottom: _isShrunk ? 20 : 60,
             ),
             decoration: BoxDecoration(
@@ -57,7 +58,9 @@ class _HomepageState extends State<Homepage> {
                 image: const AssetImage('assets/images/Plate.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.5), // Dark overlay for text readability
+                  Colors.black.withOpacity(
+                    0.5,
+                  ), // Dark overlay for text readability
                   BlendMode.darken,
                 ),
               ),
@@ -75,7 +78,10 @@ class _HomepageState extends State<Homepage> {
                     const Icon(Icons.menu, color: Colors.white, size: 28),
                     Row(
                       children: [
-                        const Icon(Icons.notifications_none, color: Colors.white),
+                        const Icon(
+                          Icons.notifications_none,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 15),
                         CircleAvatar(
                           radius: 18,
@@ -137,18 +143,26 @@ class _HomepageState extends State<Homepage> {
                               ],
                             ),
                     ),
-                    
+
                     _buildSectionHeader("Meal Recommendations"),
                     const SizedBox(height: 15),
                     _buildMealList(),
 
-                    const SizedBox(height: 25),
+                    _buildSectionHeader("Your Local Favorites"),
+                    const SizedBox(height: 15),
+                    _buildMealList(),
+
+                    // I want the boxes to have space for another section below, so I added extra space at the bottom of the scroll view to prevent bouncing when the user scrolls to the end of the list. This way, they can see the last item without it bouncing back up.
+                    const SizedBox(height: 100),
+                    
+                    
                     _buildSectionHeader("Local Offers & Deals"),
                     const SizedBox(height: 15),
                     _buildLocalDeals(),
-                    
+
                     // Extra space at the bottom to ensure smooth scrolling without bouncing
                     const SizedBox(height: 100),
+                    
                   ],
                 ),
               ),
@@ -183,7 +197,10 @@ class _HomepageState extends State<Homepage> {
                     color: Colors.orange,
                   ),
                 ),
-                const Text("\R150", style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  "\R150",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             const SizedBox(width: 20),
@@ -191,8 +208,14 @@ class _HomepageState extends State<Homepage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Your Food Budget", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text("Remaining: \R85", style: TextStyle(color: Colors.grey[600])),
+                  const Text(
+                    "Your Food Budget",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    "Remaining: \R85",
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {},
@@ -200,11 +223,14 @@ class _HomepageState extends State<Homepage> {
                       backgroundColor: const Color(0xFF388E3C),
                       shape: StadiumBorder(),
                     ),
-                    child: const Text("Adjust Budget", style: TextStyle(color: Colors.white)),
-                  )
+                    child: const Text(
+                      "Adjust Budget",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -215,8 +241,14 @@ class _HomepageState extends State<Homepage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const Text("See All", style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const Text(
+          "See All",
+          style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -226,17 +258,32 @@ class _HomepageState extends State<Homepage> {
       {
         "name": "Combo Meal",
         "price": "R45.00",
-        "image": "assets/images/Combo Meal.jfif"
+        "image": "assets/images/Combo Meal.jfif",
+        "description":
+            "A perfect combination of your favorite local dishes including pap, wors, and chakalaka. Served with a side of vegetables.",
+        "quantity": "15 servings",
+        "additionalInfo":
+            "This combo meal is our most popular item, made fresh daily with locally sourced ingredients. Great for lunch or dinner.",
       },
       {
         "name": "Braai Platter",
         "price": "R120.00",
-        "image": "assets/images/Braai Platter.jfif"
+        "image": "assets/images/Braai Platter.jfif",
+        "description":
+            "A generous platter featuring grilled meats, boerewors, chicken, and lamb chops. Served with pap and tomato relish.",
+        "quantity": "8 servings",
+        "additionalInfo":
+            "Our signature braai platter is perfect for family gatherings or special occasions. All meats are marinated and grilled to perfection.",
       },
       {
         "name": "Boerewors Rolls",
         "price": "R30.00",
-        "image": "assets/images/Boerewors Rolls.jfif"
+        "image": "assets/images/Boerewors Rolls.jfif",
+        "description":
+            "Fresh boerewors sausage grilled and served in a soft roll with onions, tomato, and our special sauce.",
+        "quantity": "20 rolls",
+        "additionalInfo":
+            "Made with traditional South African boerewors recipe. These rolls are a quick and tasty snack option.",
       },
     ];
 
@@ -248,40 +295,62 @@ class _HomepageState extends State<Homepage> {
         separatorBuilder: (context, index) => const SizedBox(width: 15),
         itemBuilder: (context, index) {
           final meal = meals[index];
-          return Container(
-            width: 150,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                    child: Image.asset(
-                      meal["image"]!,
-                      fit: BoxFit.cover,
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MealDetailsScreen(meal: meal),
+                ),
+              );
+            },
+            child: Container(
+              width: 150,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 4),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(15),
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(15),
+                      ),
+                      child: Image.asset(meal["image"]!, fit: BoxFit.cover),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(meal["name"]!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(meal["price"]!, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      meal["name"]!,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      meal["price"]!,
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -305,7 +374,10 @@ class _HomepageState extends State<Homepage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text("Neighbor's Special", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  "Neighbor's Special",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Text("Get 20% off on all home-cooked meals today!"),
               ],
             ),
