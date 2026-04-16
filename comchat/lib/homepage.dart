@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:comchat/meal_details_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -11,11 +12,14 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   final ScrollController _scrollController = ScrollController();
   bool _isShrunk = false;
+  double _budgetTotal = 150.0;
+  double _spent = 65.0; // For now, hardcoded spent
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadBudget();
   }
 
   void _onScroll() {
@@ -29,6 +33,50 @@ class _HomepageState extends State<Homepage> {
         _isShrunk = false;
       });
     }
+  }
+
+  Future<void> _loadBudget() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _budgetTotal = prefs.getDouble('budgetTotal') ?? 150.0;
+    });
+  }
+
+  Future<void> _saveBudget(double newBudget) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('budgetTotal', newBudget);
+    setState(() {
+      _budgetTotal = newBudget;
+    });
+  }
+
+  void _adjustBudget() {
+    final TextEditingController controller = TextEditingController(text: _budgetTotal.toStringAsFixed(0));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Adjust Budget'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'New Budget (R)'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newBudget = double.tryParse(controller.text) ?? _budgetTotal;
+              _saveBudget(newBudget);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -176,6 +224,8 @@ class _HomepageState extends State<Homepage> {
   // --- UI COMPONENT WIDGETS ---
 
   Widget _buildBudgetCard() {
+    final remaining = _budgetTotal - _spent;
+    final progress = _spent / _budgetTotal;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -191,15 +241,15 @@ class _HomepageState extends State<Homepage> {
                   width: 70,
                   height: 70,
                   child: CircularProgressIndicator(
-                    value: 0.6, // 60% of budget used
+                    value: progress.clamp(0.0, 1.0),
                     strokeWidth: 8,
                     backgroundColor: Colors.grey[200],
                     color: Colors.orange,
                   ),
                 ),
-                const Text(
-                  "\R150",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  '\R${_budgetTotal.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -213,15 +263,15 @@ class _HomepageState extends State<Homepage> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
-                    "Remaining: \R85",
+                    "Remaining: \R${remaining.toStringAsFixed(0)}",
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _adjustBudget,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF388E3C),
-                      shape: StadiumBorder(),
+                      shape: const StadiumBorder(),
                     ),
                     child: const Text(
                       "Adjust Budget",
