@@ -52,7 +52,13 @@ class _ShopListState extends State<ShopList> {
       openingTime: '07:30',
       closingTime: '20:00',
       rating: 4.7,
-      imageUrls: [],
+      imageUrls: [
+        'assets/images/shop_images/Nandi\'s kitchen/Nandi\'s Beef Pepper Soup.jpg',
+        'assets/images/shop_images/Nandi\'s kitchen/Nandi\'s Dumblings and Beefstew.jpg',
+        'assets/images/shop_images/Nandi\'s kitchen/Nandi\'s Meatball Spagetti Recipe.jpg',
+        'assets/images/shop_images/Nandi\'s kitchen/Nandi\'s Muhodu dish.jpg',
+        'assets/images/shop_images/Nandi\'s kitchen/Nandi\'s Spagetti Paranran.jpg',
+      ],
       category: 'Home-cooked',
     ),
     Shop(
@@ -63,7 +69,13 @@ class _ShopListState extends State<ShopList> {
       openingTime: '06:00',
       closingTime: '18:00',
       rating: 4.6,
-      imageUrls: [],
+      imageUrls: [
+        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Chocolate Cake.jpg',
+        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Croissants.jpg',
+        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Donut.jpg',
+        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Muffin.jpg',
+        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Scones.jpg',
+      ],
       category: 'Bakery',
     ),
     Shop(
