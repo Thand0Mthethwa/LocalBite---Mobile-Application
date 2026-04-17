@@ -30,7 +30,9 @@ class _ShopListState extends State<ShopList> {
       openingTime: '08:00',
       closingTime: '22:00',
       rating: 4.5,
-      imageUrls: [],
+      imageUrls: [
+        'assets/images/shop_images/Quick bites/Plate.jpg',
+      ],
       category: 'Fast Food',
     ),
     Shop(
@@ -41,7 +43,9 @@ class _ShopListState extends State<ShopList> {
       openingTime: '10:00',
       closingTime: '23:00',
       rating: 4.8,
-      imageUrls: [],
+      imageUrls: [
+        'assets/images/shop_images/grill and chill braai/African food.jpg',
+      ],
       category: 'Braai',
     ),
     Shop(
@@ -70,11 +74,10 @@ class _ShopListState extends State<ShopList> {
       closingTime: '18:00',
       rating: 4.6,
       imageUrls: [
-        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Chocolate Cake.jpg',
-        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Croissants.jpg',
-        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Donut.jpg',
-        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Muffin.jpg',
-        'assets/images/shop_images/Bakery Bliss/Bakery Bliss Scones.jpg',
+        'assets/images/shop_images/Bakery Bliss/Combo.jpg',
+        'assets/images/shop_images/Bakery Bliss/Bread.jpg',
+        'assets/images/shop_images/Bakery Bliss/Donuts.jpg',
+        'assets/images/shop_images/Bakery Bliss/Smooth Shiny Sweet Buns.jpg',
       ],
       category: 'Bakery',
     ),
@@ -86,7 +89,9 @@ class _ShopListState extends State<ShopList> {
       openingTime: '09:00',
       closingTime: '21:00',
       rating: 4.9,
-      imageUrls: [],
+      imageUrls: [
+        'assets/images/shop_images/Grean Leaf Cafe/Latte.jpg',
+      ],
       category: 'Healthy',
     ),
   ];
@@ -160,10 +165,7 @@ class _ShopListState extends State<ShopList> {
                         horizontal: 16,
                         vertical: 10,
                       ),
-                      child: const Text(
-                        'Showing temporary sample shops while Firestore data is unavailable.',
-                        style: TextStyle(color: Colors.black87),
-                      ),
+                    
                     ),
                   Expanded(
                     child: ListView.builder(
