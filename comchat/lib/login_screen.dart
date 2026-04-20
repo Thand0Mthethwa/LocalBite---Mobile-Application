@@ -1,6 +1,6 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'theme.dart';
 
 enum AuthMode { login, register }
 
@@ -11,53 +11,20 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   AuthMode _authMode = AuthMode.login;
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
   bool _loading = false;
-
-  late final AnimationController _motionController;
-  late final AnimationController _pulseController;
-
-  final _rng = Random();
-  final List<_Sphere> _spheres = [];
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
-    _motionController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-
-    // Create a larger set of decorative spheres with random positions and sizes
-    // Increasing the count and variation gives a richer background.
-    final sphereCount = 14;
-    for (var i = 0; i < sphereCount; i++) {
-      _spheres.add(_Sphere(
-        offset: Offset(_rng.nextDouble(), _rng.nextDouble()),
-        // sizes from ~40px up to ~180px for variation
-        size: 40 + _rng.nextDouble() * 140,
-        // vary speed so some move slower and some faster
-        speedFactor: 0.3 + _rng.nextDouble() * 1.6,
-        phase: _rng.nextDouble() * pi * 2,
-        colorSeed: i,
-      ));
-    }
-
-    // trigger a small pulse on appear
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pulseController.forward(from: 0.0);
-    });
   }
 
   @override
@@ -65,8 +32,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
-    _motionController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -79,9 +44,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed: ${e.message}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sign in failed: ${e.message}')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -89,9 +54,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   Future<void> _register() async {
     if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
     setState(() => _loading = true);
@@ -116,206 +81,471 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   void _switchAuthMode() {
     setState(() {
-      _authMode = _authMode == AuthMode.login ? AuthMode.register : AuthMode.login;
+      _authMode = _authMode == AuthMode.login
+          ? AuthMode.register
+          : AuthMode.login;
     });
-  }
-
-  Future<void> _signOut() async {
-    await _auth.signOut();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Signed out')),
-    );
-  }
-
-  void _pulse() {
-    _pulseController.forward(from: 0.0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: _pulse,
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        body: Stack(
-          children: [
-            // Animated spheres background
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_motionController, _pulseController]),
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: _SpheresPainter(
-                      spheres: _spheres,
-                      motionValue: _motionController.value,
-                      pulseValue: Curves.elasticOut.transform(_pulseController.value),
-                      theme: theme,
-                    ),
-                  );
-                },
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.96),
+                    AppColors.background,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.82],
+                ),
               ),
             ),
-
-            // Centered login card
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Card(
-                  color: theme.colorScheme.surface,
-                  elevation: 10,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 68, left: 24, right: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Logo / brand mark
-                        Center(
-                          child: CircleAvatar(
-                            radius: 36,
-                            backgroundColor: theme.colorScheme.primary,
-                            child: Icon(Icons.group, size: 36, color: theme.colorScheme.onPrimary),
+                        Icon(
+                          Icons.food_bank,
+                          color: theme.colorScheme.secondary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Community Feed',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.secondary,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _authMode == AuthMode.login ? 'Welcome back' : 'Create an Account',
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
-                          textAlign: TextAlign.center,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Local meals made easy',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: const Color.fromARGB(255, 17, 17, 17),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.18,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign in to discover community kitchens, shops, and fresh local deals.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: const Color.fromARGB(179, 14, 13, 13),
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 24,
+              ),
+              child: Card(
+                color: Colors.white.withOpacity(0.94),
+                elevation: 24,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 30.0,
+                    horizontal: 24.0,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 38,
+                          backgroundColor: theme.colorScheme.secondary,
+                          child: Icon(
+                            Icons.storefront,
+                            size: 34,
+                            color: theme.colorScheme.onSecondary,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _authMode == AuthMode.login ? 'Sign in to continue' : 'Please fill in the details to start',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(179)),
-                          textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _authMode == AuthMode.login
+                            ? 'Welcome back'
+                            : 'Create your account',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
                         ),
-                        const SizedBox(height: 16),
-
-                        if (user != null) ...[
-                          ListTile(
-                            leading: const Icon(Icons.person),
-                            title: Text(user.email ?? user.uid),
-                            subtitle: const Text('You are signed in'),
-                            trailing: TextButton(
-                              onPressed: _signOut,
-                              child: const Text('Sign out'),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 10,
+                        runSpacing: 8,
+                        children: [
+                          _FeatureChip(
+                            label: 'Fast login',
+                            icon: Icons.flash_on,
+                            color: theme.colorScheme.primary,
+                          ),
+                          _FeatureChip(
+                            label: 'Local deals',
+                            icon: Icons.storefront,
+                            color: theme.colorScheme.secondary,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _authMode == AuthMode.login
+                            ? 'Use your email to sign in securely.'
+                            : 'Register and join your local community.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withAlpha(180),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 18),
+                      TextField(
+                        controller: _emailCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Email address',
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
+                            color: theme.colorScheme.primary,
+                          ),
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withAlpha(30),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                        ],
-
-                        // Email
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.secondary,
+                              width: 1.7,
+                            ),
+                          ),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _passwordCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: theme.colorScheme.primary,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: theme.colorScheme.onSurface.withAlpha(160),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _passwordVisible = !_passwordVisible;
+                              });
+                            },
+                          ),
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withAlpha(30),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.secondary,
+                              width: 1.7,
+                            ),
+                          ),
+                        ),
+                        obscureText: !_passwordVisible,
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Forgot password tapped'),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                          ),
+                          child: Text(
+                            'Forgot password?',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_authMode == AuthMode.register) ...[
+                        const SizedBox(height: 14),
                         TextField(
-                          controller: _emailCtrl,
+                          controller: _confirmPasswordCtrl,
                           decoration: InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email, color: theme.colorScheme.primary),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
+                            labelText: 'Confirm password',
+                            prefixIcon: Icon(
+                              Icons.lock_outline,
+                              color: theme.colorScheme.primary,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _confirmPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: theme.colorScheme.onSurface.withAlpha(
+                                  160,
+                                ),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _confirmPasswordVisible =
+                                      !_confirmPasswordVisible;
+                                });
+                              },
+                            ),
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.onSurface.withAlpha(
+                                  30,
+                                ),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-                            ),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Password
-                        TextField(
-                          controller: _passwordCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock, color: theme.colorScheme.primary),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-                            ),
-                          ),
-                          obscureText: true,
-                        ),
-
-                        if (_authMode == AuthMode.register) ...[
-                          const SizedBox(height: 12),
-                          // Confirm Password
-                          TextField(
-                            controller: _confirmPasswordCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Confirm Password',
-                              prefixIcon: Icon(Icons.lock, color: theme.colorScheme.primary),
-                              filled: true,
-                              fillColor: theme.colorScheme.surface,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: theme.colorScheme.onSurface.withAlpha(20)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.secondary,
+                                width: 1.7,
                               ),
                             ),
-                            obscureText: true,
+                          ),
+                          obscureText: !_confirmPasswordVisible,
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.secondary,
+                          foregroundColor: theme.colorScheme.onSecondary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: _loading
+                            ? null
+                            : (_authMode == AuthMode.login
+                                  ? _signIn
+                                  : _register),
+                        child: _loading
+                            ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  color: theme.colorScheme.onSecondary,
+                                ),
+                              )
+                            : Text(
+                                _authMode == AuthMode.login
+                                    ? 'Sign In'
+                                    : 'Create Account',
+                              ),
+                      ),
+                      const SizedBox(height: 14),
+                      Center(
+                        child: Text(
+                          'or continue with',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _SocialButton(
+                            icon: Icons.apple,
+                            label: 'Apple',
+                            onTap: () {},
+                          ),
+                          const SizedBox(width: 12),
+                          _SocialButton(
+                            icon: Icons.g_mobiledata,
+                            label: 'Google',
+                            onTap: () {},
                           ),
                         ],
-                        const SizedBox(height: 20),
-
-                        // Primary action
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: _loading ? null : (_authMode == AuthMode.login ? _signIn : _register),
-                          child: _loading
-                              ? SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary),
-                                )
-                              : Text(_authMode == AuthMode.login ? 'Sign In' : 'Create Account'),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Secondary action
-                        TextButton(
+                      ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: TextButton(
                           onPressed: _loading ? null : _switchAuthMode,
                           child: Text(
                             _authMode == AuthMode.login
                                 ? 'Don\'t have an account? Sign up'
                                 : 'Already have an account? Sign in',
-                            style: TextStyle(color: theme.colorScheme.primary),
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-
-                        TextButton(
-                          onPressed: () {
-                            // placeholder for forgot password
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Forgot password tapped')));
-                          },
-                          child: Text('Forgot password?', style: TextStyle(color: theme.colorScheme.primary)),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _FeatureChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SocialButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.onSurface.withOpacity(0.08),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.onSurface.withOpacity(0.72),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -324,69 +554,3 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 }
-
-class _Sphere {
-  final Offset offset; // 0..1 fractional offset
-  final double size;
-  final double speedFactor;
-  final double phase;
-  final int colorSeed;
-
-  _Sphere({
-    required this.offset,
-    required this.size,
-    required this.speedFactor,
-    required this.phase,
-    required this.colorSeed,
-  });
-}
-
-class _SpheresPainter extends CustomPainter {
-  final List<_Sphere> spheres;
-  final double motionValue; // 0..1
-  final double pulseValue; // 0..1
-  final ThemeData theme;
-
-  _SpheresPainter({
-    required this.spheres,
-    required this.motionValue,
-    required this.pulseValue,
-    required this.theme,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    for (var s in spheres) {
-      final dx = (sin((motionValue * 2 * pi * s.speedFactor) + s.phase) * 0.03) * size.width;
-      final dy = (cos((motionValue * 2 * pi * s.speedFactor) + s.phase) * 0.03) * size.height;
-
-      final cx = s.offset.dx * size.width + dx;
-      final cy = s.offset.dy * size.height + dy;
-
-      final scale = 1.0 + 0.15 * pulseValue * (1.0 - (s.speedFactor - 0.5) / 2.0);
-      final radius = (s.size * 0.5) * scale;
-
-      paint.color = _colorForSeed(s.colorSeed).withAlpha((36 + 15 * pulseValue).toInt());
-      canvas.drawCircle(Offset(cx, cy), radius, paint);
-    }
-  }
-
-  Color _colorForSeed(int seed) {
-    // pick harmonious colors tied to theme
-    final colors = [
-      theme.colorScheme.primary,
-      theme.colorScheme.secondary,
-      theme.colorScheme.primary.withAlpha(230),
-      theme.colorScheme.secondary.withAlpha(230),
-    ];
-    return colors[seed % colors.length];
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpheresPainter old) {
-    return old.motionValue != motionValue || old.pulseValue != pulseValue || old.spheres != spheres;
-  }
-}
-
