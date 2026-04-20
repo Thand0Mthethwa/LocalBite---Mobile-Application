@@ -103,7 +103,7 @@ class _HomepageState extends State<Homepage> {
             ),
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: const AssetImage('assets/images/Plate.jpg'),
+                image: const AssetImage('assets/images/Boerewors Rolls.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.black.withOpacity(
