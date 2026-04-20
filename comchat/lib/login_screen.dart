@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Local meals made easy',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: const Color.fromARGB(255, 17, 17, 17),
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.18,
                     ),
@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Sign in to discover community kitchens, shops, and fresh local deals.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white70,
+                      color: const Color.fromARGB(179, 14, 13, 13),
                       height: 1.45,
                     ),
                   ),
