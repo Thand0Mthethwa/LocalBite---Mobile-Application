@@ -14,12 +14,16 @@ class _HomepageState extends State<Homepage> {
   bool _isShrunk = false;
   double _budgetTotal = 150.0;
   double _spent = 65.0; // For now, hardcoded spent
-
+  String _userName = 'Guest User';
+  String _userEmail = 'guest@example.com';
+  
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadBudget();
+    _loadUserProfile();
+    _loadSpentAmount();
   }
 
   void _onScroll() {
@@ -39,6 +43,31 @@ class _HomepageState extends State<Homepage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _budgetTotal = prefs.getDouble('budgetTotal') ?? 150.0;
+    });
+  }
+
+  Future<void> _loadSpentAmount() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _spent = prefs.getDouble('spentAmount') ?? 65.0;
+    });
+  }
+
+  Future<void> _loadUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Guest User';
+      _userEmail = prefs.getString('userEmail') ?? 'guest@example.com';
+    });
+  }
+
+  Future<void> _saveUserProfile(String name, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', name);
+    await prefs.setString('userEmail', email);
+    setState(() {
+      _userName = name;
+      _userEmail = email;
     });
   }
 
@@ -85,11 +114,68 @@ class _HomepageState extends State<Homepage> {
     super.dispose();
   }
 
+  void _editProfileDetails() {
+    final TextEditingController nameController =
+        TextEditingController(text: _userName);
+    final TextEditingController emailController =
+        TextEditingController(text: _userEmail);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Credentials'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _saveUserProfile(nameController.text, emailController.text);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editProfilePicture() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Profile Picture'),
+        content: const Text('You can add functionality here to pick an image from your gallery or take a photo.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey[100],
-      child: Column(
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      drawer: _buildDrawer(),
+      body: Column(
         children: [
           // 1. CUSTOM HEADER (Matches your Mockup)
           AnimatedContainer(
@@ -123,7 +209,12 @@ class _HomepageState extends State<Homepage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.menu, color: Colors.white, size: 28),
+                    Builder(
+                      builder: (context) => GestureDetector(
+                        onTap: () => Scaffold.of(context).openDrawer(),
+                        child: const Icon(Icons.menu, color: Colors.white, size: 28),
+                      ),
+                    ),
                     Row(
                       children: [
                         const Icon(
@@ -431,6 +522,38 @@ class _HomepageState extends State<Homepage> {
                 Text("Get 20% off on all home-cooked meals today!"),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(
+              color: Color(0xFF388E3C),
+            ),
+            accountName: Text(_userName),
+            accountEmail: Text(_userEmail),
+            currentAccountPicture: GestureDetector(
+              onTap: _editProfilePicture,
+              child: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Edit Credentials'),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              _editProfileDetails();
+            },
           ),
         ],
       ),
