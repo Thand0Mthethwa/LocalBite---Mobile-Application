@@ -16,7 +16,7 @@ class _HomepageState extends State<Homepage> {
   double _spent = 65.0; // For now, hardcoded spent
   String _userName = 'Guest User';
   String _userEmail = 'guest@example.com';
-  
+
   @override
   void initState() {
     super.initState();
@@ -80,7 +80,9 @@ class _HomepageState extends State<Homepage> {
   }
 
   void _adjustBudget() {
-    final TextEditingController controller = TextEditingController(text: _budgetTotal.toStringAsFixed(0));
+    final TextEditingController controller = TextEditingController(
+      text: _budgetTotal.toStringAsFixed(0),
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -97,7 +99,8 @@ class _HomepageState extends State<Homepage> {
           ),
           TextButton(
             onPressed: () {
-              final newBudget = double.tryParse(controller.text) ?? _budgetTotal;
+              final newBudget =
+                  double.tryParse(controller.text) ?? _budgetTotal;
               _saveBudget(newBudget);
               Navigator.of(context).pop();
             },
@@ -115,10 +118,12 @@ class _HomepageState extends State<Homepage> {
   }
 
   void _editProfileDetails() {
-    final TextEditingController nameController =
-        TextEditingController(text: _userName);
-    final TextEditingController emailController =
-        TextEditingController(text: _userEmail);
+    final TextEditingController nameController = TextEditingController(
+      text: _userName,
+    );
+    final TextEditingController emailController = TextEditingController(
+      text: _userEmail,
+    );
 
     showDialog(
       context: context,
@@ -159,7 +164,9 @@ class _HomepageState extends State<Homepage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Change Profile Picture'),
-        content: const Text('You can add functionality here to pick an image from your gallery or take a photo.'),
+        content: const Text(
+          'You can add functionality here to pick an image from your gallery or take a photo.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -212,7 +219,11 @@ class _HomepageState extends State<Homepage> {
                     Builder(
                       builder: (context) => GestureDetector(
                         onTap: () => Scaffold.of(context).openDrawer(),
-                        child: const Icon(Icons.menu, color: Colors.white, size: 28),
+                        child: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                     ),
                     Row(
@@ -293,15 +304,13 @@ class _HomepageState extends State<Homepage> {
 
                     // I want the boxes to have space for another section below, so I added extra space at the bottom of the scroll view to prevent bouncing when the user scrolls to the end of the list. This way, they can see the last item without it bouncing back up.
                     const SizedBox(height: 100),
-                    
-                    
+
                     _buildSectionHeader("Local Offers & Deals"),
                     const SizedBox(height: 15),
                     _buildLocalDeals(),
 
                     // Extra space at the bottom to ensure smooth scrolling without bouncing
                     const SizedBox(height: 100),
-                    
                   ],
                 ),
               ),
@@ -534,9 +543,7 @@ class _HomepageState extends State<Homepage> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color(0xFF388E3C),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF388E3C)),
             accountName: Text(_userName),
             accountEmail: Text(_userEmail),
             currentAccountPicture: GestureDetector(
