@@ -1,6 +1,6 @@
+import 'package:comchat/guest_bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:comchat/login_screen.dart';
 import 'package:comchat/bottom_navigation.dart';
 
 class AuthGate extends StatelessWidget {
@@ -21,7 +21,7 @@ class AuthGate extends StatelessWidget {
           return const BottomNavigation();
         }
 
-        return const LoginScreen();
+        return const GuestBottomNavigation();
       },
     );
   }

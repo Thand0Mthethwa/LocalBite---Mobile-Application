@@ -180,7 +180,7 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color.fromARGB(255, 0, 0, 0),
       drawer: _buildDrawer(),
       body: Column(
         children: [
@@ -338,8 +338,8 @@ class _HomepageState extends State<Homepage> {
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 70,
-                  height: 70,
+                  width: 60,
+                  height: 60,
                   child: CircularProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
                     strokeWidth: 8,
