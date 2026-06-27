@@ -8,7 +8,8 @@ class MealDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(meal['name']!), backgroundColor: Colors.green),
+      backgroundColor: Colors.black,
+      appBar: AppBar(title: Text(meal['name']!), backgroundColor: Colors.black),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -40,7 +41,7 @@ class MealDetailsScreen extends StatelessWidget {
               meal['price']!,
               style: const TextStyle(
                 fontSize: 24,
-                color: Colors.green,
+                color: Colors.grey,
                 fontWeight: FontWeight.bold,
               ),
             ),
