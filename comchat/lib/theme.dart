@@ -5,45 +5,45 @@ class AppColors {
   AppColors._();
 
   // Primary brand color (deep blue)
-  static const Color primary = Color.fromARGB(255, 222, 226, 233);
+  static const Color primary = Colors.black;
   static const Color onPrimary = Colors.white;
 
   // Accent / secondary (teal)
-  static const Color secondary = Color(0xFF00A896);
+  static const Color secondary = Color.fromARGB(255, 50, 50, 50);
   static const Color onSecondary = Colors.white;
 
   // Background / surfaces
-  static const Color background = Color(0xFFF6F8FA);
+  static const Color background = Colors.white;
   static const Color surface = Colors.white;
-  static const Color onSurface = Color(0xFF1F2937); // neutral dark
-  static const Color onBackground = Color(0xFF111827);
+  static const Color onSurface = Color.fromARGB(255, 30, 30, 30); // neutral dark
+  static const Color onBackground = Colors.black;
 
   // Muted text / disabled
-  static const Color muted = Color(0xFF6B7280);
+  static const Color muted = Color.fromARGB(255, 100, 100, 100);
 
   // Custom feature colors
-  static const Color headerGreen = Color(0xFF4CAF50);
+  static const Color headerGreen = Color.fromARGB(255, 40, 40, 40);
 }
 
 class AppTheme {
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color.fromARGB(255, 8, 8, 8),
-      primary: const Color.fromARGB(255, 28, 28, 29),
-      secondary: const Color.fromARGB(255, 78, 211, 45),
+      seedColor: Colors.black,
+      primary: Colors.black,
+      secondary: AppColors.secondary,
       surface: AppColors.surface,
-      onPrimary: const Color.fromARGB(255, 248, 245, 245),
-      onSecondary: const Color.fromARGB(255, 29, 235, 115),
+      onPrimary: Colors.white,
+      onSecondary: AppColors.onSecondary,
       onSurface: AppColors.onBackground,
     );
 
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color.fromARGB(255, 236, 222, 222),
+      scaffoldBackgroundColor: Colors.white,
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color.fromARGB(255, 14, 124, 0),
-        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
       ),
@@ -52,9 +52,9 @@ class AppTheme {
         foregroundColor: AppColors.onSecondary,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-        selectedItemColor: const Color.fromARGB(255, 121, 132, 151),
-        unselectedItemColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey[600],
         showUnselectedLabels: true,
       ),
       // Card styling is intentionally minimal; prefer default elevated card styles.
