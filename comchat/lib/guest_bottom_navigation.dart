@@ -1,5 +1,7 @@
+import 'package:comchat/ad_reels_screen.dart';
 import 'package:comchat/guest_homepage.dart';
 import 'package:comchat/login_screen.dart';
+import 'package:comchat/models/shop.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:comchat/shop_list.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +20,24 @@ class _GuestBottomNavigationState extends State<GuestBottomNavigation> {
   final List<Widget> _screens = [
     const GuestHomepage(),
     const ShopList(),
+    AdReelsScreen(
+      ads: [
+        Shop(
+          id: 'sample-ad',
+          name: 'Quick Bites Fast Food',
+          address: '12 Market Street',
+          contact: '+27 82 555 1234',
+          openingTime: '08:00',
+          closingTime: '22:00',
+          rating: 4.5,
+          imageUrls: const [],
+          category: 'Fast Food',
+          statusText: 'Fresh lunch deals and combo specials all week long!',
+          statusDurationSeconds: 45,
+          isStatusAdActive: true,
+        ),
+      ],
+    ),
   ];
 
   late final VoidCallback _navListener;
@@ -86,6 +106,10 @@ class _GuestBottomNavigationState extends State<GuestBottomNavigation> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.shop), label: 'Shops'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle_fill),
+            label: 'Ads',
+          ),
         ],
       ),
     );

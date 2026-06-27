@@ -1,4 +1,6 @@
+import 'package:comchat/ad_reels_screen.dart';
 import 'package:comchat/homepage.dart';
+import 'package:comchat/models/shop.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:comchat/profile_screen.dart';
 import 'package:comchat/shop_list.dart';
@@ -19,6 +21,24 @@ class _BottomNavigationState extends State<BottomNavigation> {
   final List<Widget> _screens = [
     const Homepage(),
     const ShopList(),
+    AdReelsScreen(
+      ads: [
+        Shop(
+          id: 'sample-ad',
+          name: 'Quick Bites Fast Food',
+          address: '12 Market Street',
+          contact: '+27 82 555 1234',
+          openingTime: '08:00',
+          closingTime: '22:00',
+          rating: 4.5,
+          imageUrls: const [],
+          category: 'Fast Food',
+          statusText: 'Fresh lunch deals and combo specials all week long!',
+          statusDurationSeconds: 45,
+          isStatusAdActive: true,
+        ),
+      ],
+    ),
     const ProfileScreen(),
   ];
 
@@ -85,6 +105,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.shop), label: 'Shops'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle_fill),
+            label: 'Ads',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
