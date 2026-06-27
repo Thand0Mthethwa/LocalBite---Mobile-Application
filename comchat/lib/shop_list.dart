@@ -1,5 +1,6 @@
 import 'package:comchat/repositories/shop_repository.dart';
 import 'package:comchat/shop_details_screen.dart';
+import 'package:comchat/widgets/business_status_ad_card.dart';
 import 'package:flutter/material.dart';
 import 'package:comchat/models/shop.dart';
 
@@ -30,10 +31,13 @@ class _ShopListState extends State<ShopList> {
       openingTime: '08:00',
       closingTime: '22:00',
       rating: 4.5,
-      imageUrls: [
-        'assets/images/shop_images/Quick bites/Plate.jpg',
-      ],
+      imageUrls: ['assets/images/shop_images/Quick bites/Plate.jpg'],
       category: 'Fast Food',
+      statusText: 'Fresh lunch deals and combo specials all week long!',
+      statusDurationSeconds: 45,
+      statusMusicUrl:
+          'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      isStatusAdActive: true,
     ),
     Shop(
       id: 'sample-2',
@@ -89,9 +93,7 @@ class _ShopListState extends State<ShopList> {
       openingTime: '09:00',
       closingTime: '21:00',
       rating: 4.9,
-      imageUrls: [
-        'assets/images/shop_images/Grean Leaf Cafe/Latte.jpg',
-      ],
+      imageUrls: ['assets/images/shop_images/Grean Leaf Cafe/Latte.jpg'],
       category: 'Healthy',
     ),
   ];
@@ -165,7 +167,6 @@ class _ShopListState extends State<ShopList> {
                         horizontal: 16,
                         vertical: 10,
                       ),
-                    
                     ),
                   Expanded(
                     child: ListView.builder(
@@ -226,6 +227,11 @@ class _ShopListState extends State<ShopList> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (shop.isStatusAdActive)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: BusinessStatusAdCard(shop: shop),
+                    ),
                   // Shop Name and Category Badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
