@@ -1,3 +1,4 @@
+import 'package:comchat/theme.dart';
 import 'package:flutter/material.dart';
 
 class MealDetailsScreen extends StatelessWidget {
@@ -7,9 +8,16 @@ class MealDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(title: Text(meal['name']!), backgroundColor: Colors.black),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(meal['name']!),
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.onSurface,
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -20,7 +28,7 @@ class MealDetailsScreen extends StatelessWidget {
               height: 250,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
                 image: DecorationImage(
                   image: AssetImage(meal['image']!),
                   fit: BoxFit.cover,
@@ -32,59 +40,75 @@ class MealDetailsScreen extends StatelessWidget {
             // Meal Name
             Text(
               meal['name']!,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
 
             // Price
             Text(
               meal['price']!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
-                color: Colors.grey,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
 
             // Description
-            const Text(
+            Text(
               'Description',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               meal['description'] ??
                   'A delicious meal prepared with fresh local ingredients.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.muted,
+                height: 1.45,
+              ),
             ),
             const SizedBox(height: 20),
 
             // Quantity Section
-            const Text(
+            Text(
               'Quantity',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.warmCream,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Available Quantity:',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: AppColors.onSurface),
                   ),
                   Text(
                     meal['quantity'] ?? '10 servings',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ],
@@ -93,15 +117,23 @@ class MealDetailsScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Additional Info
-            const Text(
+            Text(
               'Additional Information',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               meal['additionalInfo'] ??
                   'This meal is prepared fresh daily using locally sourced ingredients. Perfect for sharing with family and friends.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.muted,
+                height: 1.45,
+              ),
             ),
             const SizedBox(height: 30),
 
@@ -114,15 +146,15 @@ class MealDetailsScreen extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Ordering ${meal['name']}...'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppColors.primary,
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: theme.colorScheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
                 child: const Text(
