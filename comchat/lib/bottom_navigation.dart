@@ -4,7 +4,7 @@ import 'package:comchat/models/shop.dart';
 import 'package:comchat/navigation_service.dart';
 import 'package:comchat/profile_screen.dart';
 import 'package:comchat/shop_list.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:comchat/theme.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavigation extends StatefulWidget {
@@ -71,46 +71,77 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
         onPageChanged: (index) {
-          // Keep both local and global state in sync when user swipes.
           setState(() => _currentIndex = index);
           if (navIndex.value != index) navIndex.value = index;
         },
         children: _screens,
       ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'Sign out',
-        onPressed: () async {
-          await FirebaseAuth.instance.signOut();
-        },
-        child: const Icon(Icons.logout),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          navIndex.value = index;
-          _pageController.animateToPage(
-            index,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shop), label: 'Shops'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_fill),
-            label: 'Ads',
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BottomNavigationBar(
+              backgroundColor: Colors.white,
+              currentIndex: _currentIndex,
+              selectedItemColor: theme.colorScheme.primary,
+              unselectedItemColor: AppColors.muted,
+              type: BottomNavigationBarType.fixed,
+              elevation: 0,
+              onTap: (index) {
+                navIndex.value = index;
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.storefront_outlined),
+                  activeIcon: Icon(Icons.storefront),
+                  label: 'Shops',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.play_circle_outline),
+                  activeIcon: Icon(Icons.play_circle_fill),
+                  label: 'Ads',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
