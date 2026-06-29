@@ -1,5 +1,6 @@
 import 'package:comchat/repositories/shop_repository.dart';
 import 'package:comchat/shop_details_screen.dart';
+import 'package:comchat/theme.dart';
 import 'package:comchat/widgets/business_status_ad_card.dart';
 import 'package:flutter/material.dart';
 import 'package:comchat/models/shop.dart';
@@ -101,6 +102,8 @@ class _ShopListState extends State<ShopList> {
   @override
   Widget build(BuildContext context) {
     final shopRepository = ShopRepository();
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         // Category Filter
@@ -124,10 +127,10 @@ class _ShopListState extends State<ShopList> {
                       selectedCategory = category;
                     });
                   },
-                  backgroundColor: Colors.grey[200],
-                  selectedColor: Colors.green,
+                  backgroundColor: AppColors.warmCream,
+                  selectedColor: theme.colorScheme.primary,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
+                    color: isSelected ? Colors.white : AppColors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 );
@@ -162,10 +165,17 @@ class _ShopListState extends State<ShopList> {
                   if (useSampleShops)
                     Container(
                       width: double.infinity,
-                      color: Colors.yellow[100],
+                      color: AppColors.warmCream,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
+                      ),
+                      child: const Text(
+                        'Fresh local food and daily specials nearby',
+                        style: TextStyle(
+                          color: AppColors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   Expanded(
@@ -191,6 +201,8 @@ class _ShopListState extends State<ShopList> {
   }
 
   Widget _buildShopCard(BuildContext context, Shop shop) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -202,8 +214,9 @@ class _ShopListState extends State<ShopList> {
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        elevation: 0,
+        color: Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -213,9 +226,9 @@ class _ShopListState extends State<ShopList> {
               height: 180,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(15),
+                  top: Radius.circular(18),
                 ),
-                color: Colors.grey[300],
+                color: AppColors.warmCream,
               ),
               child: shop.imageUrls.isNotEmpty
                   ? Image.network(shop.imageUrls.first, fit: BoxFit.cover)
@@ -252,7 +265,9 @@ class _ShopListState extends State<ShopList> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green[100],
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.12,
+                          ),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -260,7 +275,7 @@ class _ShopListState extends State<ShopList> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.green[700],
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ),
@@ -335,7 +350,7 @@ class _ShopListState extends State<ShopList> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green,
+                            color: theme.colorScheme.primary,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
