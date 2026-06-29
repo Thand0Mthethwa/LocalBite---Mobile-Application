@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:comchat/meal_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -13,9 +15,10 @@ class _HomepageState extends State<Homepage> {
   final ScrollController _scrollController = ScrollController();
   bool _isShrunk = false;
   double _budgetTotal = 150.0;
-  double _spent = 65.0; // For now, hardcoded spent
+  double _spent = 65.0;
   String _userName = 'Guest User';
   String _userEmail = 'guest@example.com';
+  List<double> _dailySpends = [0, 0, 0, 0, 0, 0, 0];
 
   @override
   void initState() {
@@ -24,6 +27,7 @@ class _HomepageState extends State<Homepage> {
     _loadBudget();
     _loadUserProfile();
     _loadSpentAmount();
+    _loadDailySpends();
   }
 
   void _onScroll() {
@@ -53,6 +57,37 @@ class _HomepageState extends State<Homepage> {
     });
   }
 
+  Future<void> _loadDailySpends() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().weekday - 1;
+
+    setState(() {
+      _dailySpends = List<double>.generate(7, (index) {
+        return prefs.getDouble('dailySpend_$index') ?? 0.0;
+      });
+
+      if (_dailySpends[today] == 0 && _spent > 0) {
+        _dailySpends[today] = _spent;
+      }
+    });
+  }
+
+  Future<void> _recordSpending(double amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().weekday - 1;
+
+    final currentDaySpend = prefs.getDouble('dailySpend_$today') ?? 0.0;
+    final newDaySpend = currentDaySpend + amount;
+
+    setState(() {
+      _dailySpends[today] = newDaySpend;
+      _spent = _dailySpends.reduce((a, b) => a + b);
+    });
+
+    await prefs.setDouble('dailySpend_$today', newDaySpend);
+    await prefs.setDouble('spentAmount', _spent);
+  }
+
   Future<void> _loadUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -74,9 +109,21 @@ class _HomepageState extends State<Homepage> {
   Future<void> _saveBudget(double newBudget) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('budgetTotal', newBudget);
+
+    final today = DateTime.now().weekday - 1;
+    final difference = newBudget - _budgetTotal;
+    _dailySpends[today] = (_dailySpends[today] + difference).clamp(
+      0,
+      double.infinity,
+    );
+
     setState(() {
       _budgetTotal = newBudget;
+      _spent = _dailySpends.reduce((a, b) => a + b);
     });
+
+    await prefs.setDouble('dailySpend_$today', _dailySpends[today]);
+    await prefs.setDouble('spentAmount', _spent);
   }
 
   void _adjustBudget() {
@@ -179,12 +226,13 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+      backgroundColor: AppColors.background,
       drawer: _buildDrawer(),
       body: Column(
         children: [
-          // 1. CUSTOM HEADER (Matches your Mockup)
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             width: double.infinity,
@@ -192,22 +240,20 @@ class _HomepageState extends State<Homepage> {
               top: 50,
               left: 20,
               right: 20,
-              bottom: _isShrunk ? 20 : 60,
+              bottom: _isShrunk ? 20 : 42,
             ),
             decoration: BoxDecoration(
-              image: DecorationImage(
-                image: const AssetImage('assets/images/Boerewors Rolls.jpg'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(
-                    0.5,
-                  ), // Dark overlay for text readability
-                  BlendMode.darken,
-                ),
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary.withValues(alpha: 0.96),
+                  AppColors.background,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(_isShrunk ? 20 : 40),
-                bottomRight: Radius.circular(_isShrunk ? 20 : 40),
+                bottomLeft: Radius.circular(_isShrunk ? 24 : 36),
+                bottomRight: Radius.circular(_isShrunk ? 24 : 36),
               ),
             ),
             child: Column(
@@ -235,7 +281,7 @@ class _HomepageState extends State<Homepage> {
                         const SizedBox(width: 15),
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundColor: Colors.white.withValues(alpha: 0.18),
                           child: const Icon(Icons.person, color: Colors.white),
                         ),
                       ],
@@ -244,43 +290,57 @@ class _HomepageState extends State<Homepage> {
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  height: _isShrunk ? 10 : 30,
+                  height: _isShrunk ? 10 : 16,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 300),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: _isShrunk ? 24 : 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      child: const Text('LocalBite'),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 300),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: _isShrunk ? 24 : 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  child: const Text('LocalBite'),
+                ),
+                if (!_isShrunk) ...[
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Crave it? Order it fresh from nearby cooks.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    if (!_isShrunk)
-                      const Text(
-                        'Discover and buy local food with ease.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search meals or stalls',
+                        hintStyle: const TextStyle(color: AppColors.muted),
+                        border: InputBorder.none,
+                        icon: Icon(
+                          Icons.search,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                  ],
-                ),
+                      style: const TextStyle(color: AppColors.onSurface),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-
-          // 2. SCROLLABLE CONTENT AREA
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              transform: Matrix4.translationValues(0, _isShrunk ? 0 : -40, 0),
+              transform: Matrix4.translationValues(0, _isShrunk ? 0 : -26, 0),
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // FOOD BUDGET CARD
                     AnimatedSize(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
@@ -289,28 +349,22 @@ class _HomepageState extends State<Homepage> {
                           : Column(
                               children: [
                                 _buildBudgetCard(),
-                                const SizedBox(height: 25),
+                                const SizedBox(height: 16),
                               ],
                             ),
                     ),
-
-                    _buildSectionHeader("Meal Recommendations"),
-                    const SizedBox(height: 15),
+                    _buildSectionHeader('Meal Recommendations'),
+                    const SizedBox(height: 12),
                     _buildMealList(),
-
-                    _buildSectionHeader("Your Local Favorites"),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('Your Local Favorites'),
+                    const SizedBox(height: 12),
                     _buildMealList(),
-
-                    // I want the boxes to have space for another section below, so I added extra space at the bottom of the scroll view to prevent bouncing when the user scrolls to the end of the list. This way, they can see the last item without it bouncing back up.
-                    const SizedBox(height: 100),
-
-                    _buildSectionHeader("Local Offers & Deals"),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Local Offers & Deals'),
+                    const SizedBox(height: 12),
                     _buildLocalDeals(),
-
-                    // Extra space at the bottom to ensure smooth scrolling without bouncing
-                    const SizedBox(height: 100),
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -326,63 +380,175 @@ class _HomepageState extends State<Homepage> {
   Widget _buildBudgetCard() {
     final remaining = _budgetTotal - _spent;
     final progress = _spent / _budgetTotal;
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            // Circular Progress
-            Stack(
-              alignment: Alignment.center,
+    final theme = Theme.of(context);
+    final maxSpend = _dailySpends.isEmpty
+        ? 1.0
+        : (_dailySpends.reduce((a, b) => a > b ? a : b) as double).clamp(
+            1.0,
+            double.infinity,
+          );
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Circular Progress Indicator
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: CircularProgressIndicator(
+                  value: progress.clamp(0.0, 1.0),
+                  strokeWidth: 8,
+                  backgroundColor: Colors.white.withValues(alpha: 0.4),
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                '${((progress * 100).clamp(0.0, 100.0)).toStringAsFixed(0)}%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          // Budget Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: CircularProgressIndicator(
-                    value: progress.clamp(0.0, 1.0),
-                    strokeWidth: 8,
-                    backgroundColor: Colors.grey[200],
-                    color: Colors.orange,
+                const Text(
+                  'This week\'s spend',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 3),
                 Text(
-                  '\R${_budgetTotal.toStringAsFixed(0)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  'R${_spent.toStringAsFixed(0)} / R${_budgetTotal.toStringAsFixed(0)}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                Text(
+                  'Left: R${remaining.toStringAsFixed(0)}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: _adjustBudget,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFB45309),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text('Adjust', style: TextStyle(fontSize: 12)),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Your Food Budget",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(width: 12),
+          // Weekly Bars
+          _buildWeeklyBars(_dailySpends, maxSpend, progress),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyBars(
+    List<double> weeklySpends,
+    double maxSpend,
+    double progress,
+  ) {
+    final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final today = DateTime.now().weekday - 1;
+
+    return SizedBox(
+      width: 140,
+      child: Column(
+        children: [
+          Row(
+            children: List.generate(weeklySpends.length, (index) {
+              final value = weeklySpends[index];
+              final height = (value / maxSpend).clamp(0.2, 1.0) * 56;
+              final isToday = index == today;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 62,
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: 10,
+                          height: height,
+                          decoration: BoxDecoration(
+                            color: isToday
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        labels[index],
+                        style: TextStyle(
+                          color: isToday ? Colors.white : Colors.white70,
+                          fontSize: 10,
+                          fontWeight: isToday
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "Remaining: \R${remaining.toStringAsFixed(0)}",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _adjustBudget,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF388E3C),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      "Adjust Budget",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              'Weekly trend ${((progress * 100).clamp(0.0, 100.0)).toStringAsFixed(0)}%',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -393,17 +559,25 @@ class _HomepageState extends State<Homepage> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.onSurface,
+          ),
         ),
         const Text(
-          "See All",
-          style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+          'See All',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildMealList() {
+    final theme = Theme.of(context);
     final List<Map<String, String>> meals = [
       {
         "name": "Combo Meal",
@@ -438,7 +612,7 @@ class _HomepageState extends State<Homepage> {
     ];
 
     return SizedBox(
-      height: 180,
+      height: 220,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: meals.length,
@@ -455,48 +629,71 @@ class _HomepageState extends State<Homepage> {
               );
             },
             child: Container(
-              width: 150,
+              width: 160,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 4),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.warmCream, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
+                  ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 100,
+                    height: 110,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.warmCream,
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15),
+                        top: Radius.circular(18),
                       ),
                     ),
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15),
+                        top: Radius.circular(18),
                       ),
-                      child: Image.asset(meal["image"]!, fit: BoxFit.cover),
+                      child: Image.asset(meal['image']!, fit: BoxFit.cover),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
                     child: Text(
-                      meal["name"]!,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      meal["price"]!,
+                      meal['name']!,
                       style: const TextStyle(
-                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      meal['price']!,
+                      style: const TextStyle(
+                        color: AppColors.secondary,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.star,
+                          size: 14,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text('4.8', style: TextStyle(fontSize: 12)),
+                      ],
                     ),
                   ),
                 ],
@@ -509,16 +706,27 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _buildLocalDeals() {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        color: AppColors.warmCream,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_offer, color: Colors.green),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.local_offer, color: Colors.white),
+          ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -526,9 +734,13 @@ class _HomepageState extends State<Homepage> {
               children: const [
                 Text(
                   "Neighbor's Special",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onSurface,
+                  ),
                 ),
-                Text("Get 20% off on all home-cooked meals today!"),
+                SizedBox(height: 4),
+                Text('Get 20% off on all home-cooked meals today!'),
               ],
             ),
           ),
@@ -543,7 +755,16 @@ class _HomepageState extends State<Homepage> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Color(0xFF388E3C)),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.96),
+                  AppColors.background,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
             accountName: Text(_userName),
             accountEmail: Text(_userEmail),
             currentAccountPicture: GestureDetector(
@@ -555,11 +776,20 @@ class _HomepageState extends State<Homepage> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.person),
+            leading: const Icon(Icons.person, color: AppColors.primary),
             title: const Text('Edit Credentials'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
+              Navigator.pop(context);
               _editProfileDetails();
+            },
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.logout, color: AppColors.secondary),
+            title: const Text('Sign out'),
+            onTap: () async {
+              Navigator.pop(context);
+              await FirebaseAuth.instance.signOut();
             },
           ),
         ],
