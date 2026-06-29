@@ -234,17 +234,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _createUserDocumentIfNotExist(User user) async {
+    print('Checking for user document...');
     final userDocRef =
         FirebaseFirestore.instance.collection('users').doc(user.uid);
     final userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
+      print('User document does not exist, creating one...');
+      String firstName = 'New';
+      String lastName = 'User';
+      String? photoUrl = user.photoURL;
+
+      if (user.displayName != null && user.displayName!.isNotEmpty) {
+        print('Using displayName: ${user.displayName}');
+        final parts = user.displayName!.split(' ');
+        firstName = parts.isNotEmpty ? parts.first : 'New';
+        lastName = parts.length > 1 ? parts.sublist(1).join(' ') : 'User';
+      } else if (user.email != null && user.email!.isNotEmpty) {
+        print('Using email: ${user.email}');
+        firstName = user.email!.split('@').first;
+        lastName = ''; // Or some other default
+      }
+
       await userDocRef.set({
-        'name': 'New',
-        'surname': 'User',
-        'area': 'Unknown',
-        'photoUrl': null,
+        'name': firstName,
+        'surname': lastName,
+        'area': 'Unknown', // Keep default or try to get from location if possible
+        'photoUrl': photoUrl,
       });
+      print('User document created.');
+    } else {
+      print('User document already exists.');
     }
   }
 
@@ -263,17 +283,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, authSnapshot) {
+          print('Auth state changed: ${authSnapshot.connectionState}');
           if (authSnapshot.connectionState == ConnectionState.waiting) {
+            print('Auth state waiting...');
             return const Center(child: CircularProgressIndicator());
           }
           if (authSnapshot.hasError) {
+            print('Auth error: ${authSnapshot.error}');
             return Center(child: Text('Error: ${authSnapshot.error}'));
           }
           if (!authSnapshot.hasData || authSnapshot.data == null) {
+            print('User not logged in.');
             return const Center(child: Text('Please log in to see your profile.'));
           }
 
           final user = authSnapshot.data!;
+          print('User is logged in: ${user.uid}');
           _createUserDocumentIfNotExist(user);
 
           return StreamBuilder<DocumentSnapshot>(
@@ -282,16 +307,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 .doc(user.uid)
                 .snapshots(),
             builder: (context, userSnapshot) {
+              print('User snapshot state: ${userSnapshot.connectionState}');
               if (userSnapshot.connectionState == ConnectionState.waiting) {
+                print('User snapshot waiting...');
                 return const Center(child: CircularProgressIndicator());
               }
               if (userSnapshot.hasError) {
+                print('User snapshot error: ${userSnapshot.error}');
                 return Center(child: Text('Error: ${userSnapshot.error}'));
               }
               if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                print('User data not found.');
                 return const Center(child: Text('User data not found.'));
               }
 
+              print('User data found, building profile...');
               final userData = userSnapshot.data!.data() as Map<String, dynamic>;
               final name = userData['name'] as String? ?? 'N/A';
               final surname = userData['surname'] as String? ?? '';
