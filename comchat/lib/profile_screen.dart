@@ -233,6 +233,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  Future<void> _createUserDocumentIfNotExist(User user) async {
+    final userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        'name': 'New',
+        'surname': 'User',
+        'area': 'Unknown',
+        'photoUrl': null,
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -259,6 +274,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
 
           final user = authSnapshot.data!;
+          _createUserDocumentIfNotExist(user);
 
           return StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance
