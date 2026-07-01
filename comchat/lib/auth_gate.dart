@@ -2,6 +2,7 @@ import 'package:comchat/guest_bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:comchat/bottom_navigation.dart';
+import 'package:comchat/preview_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -21,7 +22,7 @@ class AuthGate extends StatelessWidget {
           return const BottomNavigation();
         }
 
-        return const GuestBottomNavigation();
+        return const PreviewScreen();
       },
     );
   }
