@@ -51,12 +51,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   StreamSubscription<Position>? _positionStream;
   List<PurchaseHistory> _purchaseHistory = [];
   double _totalSpent = 0.0;
+  Future<void>? _userDocSetupFuture;
 
   @override
   void initState() {
     super.initState();
     _startLocationUpdates();
     _loadPurchaseHistory();
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userDocSetupFuture = _createUserDocumentIfNotExist(user);
+    }
   }
 
   @override
@@ -286,580 +292,314 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
         ],
       ),
-      body: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, authSnapshot) {
-          print('Auth state changed: ${authSnapshot.connectionState}');
-          if (authSnapshot.connectionState == ConnectionState.waiting) {
-            print('Auth state waiting...');
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (authSnapshot.hasError) {
-            print('Auth error: ${authSnapshot.error}');
-            return Center(child: Text('Error: ${authSnapshot.error}'));
-          }
-          if (!authSnapshot.hasData || authSnapshot.data == null) {
-            print('User not logged in.');
-            return const Center(
-              child: Text('Please log in to see your profile.'),
-            );
-          }
+      body: _user == null
+          ? const Center(child: Text('Please log in to see your profile.'))
+          : FutureBuilder<void>(
+              future: _userDocSetupFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final user = authSnapshot.data!;
-          print('User is logged in: ${user.uid}');
-          _createUserDocumentIfNotExist(user);
-          print('User is logged in: ${user.uid}, preparing to build profile...');
+                return StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(_user!.uid)
+                      .snapshots(),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (userSnapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${userSnapshot.error}'),
+                      );
+                    }
+                    if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                      return const Center(child: Text('User data not found.'));
+                    }
 
-          return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-          return FutureBuilder<void>(
-            future: _createUserDocumentIfNotExist(user),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                print('Ensuring user document exists...');
-                return const Center(child: CircularProgressIndicator());
-              }
+                    final userData =
+                        userSnapshot.data!.data() as Map<String, dynamic>;
+                    final name = userData['name'] as String? ?? 'N/A';
+                    final surname = userData['surname'] as String? ?? '';
+                    final area = userData['area'] as String? ?? 'N/A';
+                    final photoUrl = userData['photoUrl'] as String?;
 
-              return StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .snapshots(),
-            builder: (context, userSnapshot) {
-              print('User snapshot state: ${userSnapshot.connectionState}');
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                print('User snapshot waiting...');
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (userSnapshot.hasError) {
-                print('User snapshot error: ${userSnapshot.error}');
-                return Center(child: Text('Error: ${userSnapshot.error}'));
-              }
-              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                print('User data not found.');
-                return const Center(child: Text('User data not found.'));
-              }
-                builder: (context, userSnapshot) {
-                  print('User snapshot state: ${userSnapshot.connectionState}');
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    print('User snapshot waiting...');
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (userSnapshot.hasError) {
-                    print('User snapshot error: ${userSnapshot.error}');
-                    return Center(child: Text('Error: ${userSnapshot.error}'));
-                  }
-                  if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    print('User data not found.');
-                    return const Center(child: Text('User data not found.'));
-                  }
-
-              print('User data found, building profile...');
-              final userData =
-                  userSnapshot.data!.data() as Map<String, dynamic>;
-              final name = userData['name'] as String? ?? 'N/A';
-              final surname = userData['surname'] as String? ?? '';
-              final area = userData['area'] as String? ?? 'N/A';
-              final photoUrl = userData['photoUrl'] as String?;
-                  print('User data found, building profile...');
-                  final userData =
-                      userSnapshot.data!.data() as Map<String, dynamic>;
-                  final name = userData['name'] as String? ?? 'N/A';
-                  final surname = userData['surname'] as String? ?? '';
-                  final area = userData['area'] as String? ?? 'N/A';
-                  final photoUrl = userData['photoUrl'] as String?;
-
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundImage: photoUrl != null
-                                  ? NetworkImage(photoUrl)
-                                  : null,
-                              child: photoUrl == null
-                                  ? const Icon(Icons.person, size: 50)
-                                  : null,
-                  return Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Stack(
-                              children: [
-                                CircleAvatar(
-                                  radius: 50,
-                                  backgroundImage: photoUrl != null
-                                      ? NetworkImage(photoUrl)
-                                      : null,
-                                  child: photoUrl == null
-                                      ? const Icon(Icons.person, size: 50)
-                                      : null,
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.camera_alt),
-                                    onPressed: () {
-                                      // TODO: Implement profile photo change
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: IconButton(
-                                icon: const Icon(Icons.camera_alt),
-                                onPressed: () {
-                                  // TODO: Implement profile photo change
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Name',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        '$name $surname',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Area',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        area,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Live Location',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      if (_currentPosition == null)
-                        const Text('Getting location...')
-                      else
-                        Column(
+                    return Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SingleChildScrollView(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                            Center(
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundImage: photoUrl != null
+                                        ? NetworkImage(photoUrl)
+                                        : null,
+                                    child: photoUrl == null
+                                        ? const Icon(Icons.person, size: 50)
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.camera_alt),
+                                      onPressed: () {
+                                        // TODO: Implement profile photo change
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 24),
                             Text(
-                              'Address',
+                              'Name',
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             Text(
-                              _currentAddress ?? 'Getting address...',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              '$name $surname',
+                              style: Theme.of(context).textTheme.headlineSmall,
                             ),
-                          ],
-                        ),
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.warmCream,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'Name',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            '$name $surname',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Area',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            area,
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Live Location',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          if (_currentPosition == null)
-                            const Text('Getting location...')
-                          else
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Total Spent',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.muted,
+                            const SizedBox(height: 16),
+                            Text(
+                              'Area',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              area,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Live Location',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            if (_currentPosition == null)
+                              const Text('Getting location...')
+                            else
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
                                   ),
-                                Text(
-                                  'Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'R${_totalSpent.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Address',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
-                                  'Address',
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                Text(
-                                  _currentAddress ?? 'Getting address...',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppColors.warmCream,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Purchases',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.muted,
+                                  Text(
+                                    _currentAddress ?? 'Getting address...',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
                                   ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Spent',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.muted,
-                                      ),
-                                    ),
-                                    Text(
-                                      'R${_totalSpent.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  '${_purchaseHistory.length}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text(
-                                      'Purchases',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.muted,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${_purchaseHistory.length}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Purchase History',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                          if (_purchaseHistory.isNotEmpty)
-                            GestureDetector(
-                              onTap: _clearPurchaseHistory,
-                              child: const Text(
-                                'Clear',
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Purchase History',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.secondary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.onSurface,
-                                ),
+                                ],
                               ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (_purchaseHistory.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Text(
-                              'No purchases yet',
-                              style: TextStyle(
-                                color: AppColors.muted,
-                                fontSize: 14,
-                              ),
-                            ),
-                              if (_purchaseHistory.isNotEmpty)
-                                GestureDetector(
-                                  onTap: _clearPurchaseHistory,
-                                  child: const Text(
-                                    'Clear',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.secondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        )
-                      else
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _purchaseHistory.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final purchase = _purchaseHistory[index];
-                            final formattedDate =
-                                '${purchase.date.day}/${purchase.date.month}/${purchase.date.year} ${purchase.date.hour}:${purchase.date.minute.toString().padLeft(2, '0')}';
-
-                            return Container(
-                              padding: const EdgeInsets.all(12),
+                            const SizedBox(height: 24),
+                            Container(
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.warmCream,
-                                  width: 1,
-                          const SizedBox(height: 12),
-                          if (_purchaseHistory.isEmpty)
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 24),
-                                child: Text(
-                                  'No purchases yet',
-                                  style: TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 14,
-                                  ),
-                                ),
+                                color: AppColors.warmCream,
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          purchase.foodName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: AppColors.onSurface,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                            )
-                          else
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _purchaseHistory.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                final purchase = _purchaseHistory[index];
-                                final formattedDate =
-                                    '${purchase.date.day}/${purchase.date.month}/${purchase.date.year} ${purchase.date.hour}:${purchase.date.minute.toString().padLeft(2, '0')}';
-
-                                return Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: AppColors.warmCream,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              purchase.foodName,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                                color: AppColors.onSurface,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              formattedDate,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: AppColors.muted,
-                                              ),
-                                            ),
-                                          ],
+                                      const Text(
+                                        'Total Spent',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.muted,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          formattedDate,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.muted,
-                                          ),
                                       ),
                                       Text(
-                                        'R${purchase.amount.toStringAsFixed(2)}',
+                                        'R${_totalSpent.toStringAsFixed(2)}',
                                         style: const TextStyle(
+                                          fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
                                           color: AppColors.primary,
                                         ),
-                                      ],
-                                    ),
                                       ),
                                     ],
                                   ),
-                                  Text(
-                                    'R${purchase.amount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: AppColors.primary,
-                                    ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      const Text(
+                                        'Purchases',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.muted,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${_purchaseHistory.length}',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                                );
-                              },
+                              ),
                             ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _showAddPurchaseDialog,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Purchase History',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.onSurface,
+                                  ),
+                                ),
+                                if (_purchaseHistory.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: _clearPurchaseHistory,
+                                    child: const Text(
+                                      'Clear',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.secondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            if (_purchaseHistory.isEmpty)
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 24,
+                                  ),
+                                  child: Text(
+                                    'No purchases yet',
+                                    style: TextStyle(
+                                      color: AppColors.muted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _purchaseHistory.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  final purchase = _purchaseHistory[index];
+                                  final formattedDate =
+                                      '${purchase.date.day}/${purchase.date.month}/${purchase.date.year} ${purchase.date.hour}:${purchase.date.minute.toString().padLeft(2, '0')}';
+
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: AppColors.warmCream,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                purchase.foodName,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: AppColors.onSurface,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                formattedDate,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppColors.muted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(
+                                          'R${purchase.amount.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _showAddPurchaseDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Add Purchase',
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _showAddPurchaseDialog,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              child: const Text(
-                                'Add Purchase',
-                                style: TextStyle(color: Colors.white),
-                              ),
                             ),
-                          ),
-                          child: const Text(
-                            'Add Purchase',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          ],
                         ),
-                        ],
                       ),
-                    ],
-                  ),
-                ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+                    );
+                  },
+                );
+              },
+            ),
     );
   }
 }
